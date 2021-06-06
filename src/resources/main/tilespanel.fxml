@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.FlowPane?>
+
+<FlowPane maxHeight="512.0" maxWidth="512.0" minHeight="256.0" minWidth="256.0" prefHeight="256.0" prefWidth="256.0" style="-fx-background-color: GREEN;" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fxgames.TileController">
+   <children>
+      <ImageView fx:id="tilettt" fitHeight="64.0" fitWidth="64.0" onMouseClicked="#openTTT" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@tilettt.png" />
+         </image>
+         <cursor>
+            <Cursor fx:constant="OPEN_HAND" />
+         </cursor>
+      </ImageView>
+      <ImageView fitHeight="64.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@filler.png" />
+         </image>
+         <cursor>
+            <Cursor fx:constant="DEFAULT" />
+         </cursor>
+      </ImageView>
+      <ImageView fitHeight="64.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@filler.png" />
+         </image>
+      </ImageView>
+      <ImageView fitHeight="64.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@filler.png" />
+         </image>
+      </ImageView>
+   </children>
+</FlowPane>
