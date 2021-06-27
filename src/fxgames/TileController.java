@@ -1,13 +1,18 @@
 package fxgames;
 
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
 
 public class TileController {
 
+    public void openGame(String name) {
+        NodeController.me.activate(name, Controller.me.central);
+    }
+
     public void openTTT(MouseEvent mouseEvent) {
-       NodeController.me.activate("tic-tac-toe", (Pane) Main.me.bp.getCenter(),  event -> {
-           Main.me.bp.setCenter(NodeController.me.node("tic-tac-toe"));
-       });
+        openGame("tic-tac-toe");
+    }
+
+    public void openDunSlip(MouseEvent mouseEvent) {
+        openGame("dungeon-slippers");
     }
 }

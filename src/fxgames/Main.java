@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import fxgames.Controller;
 
 public class Main extends Application {
 
@@ -14,8 +15,6 @@ public class Main extends Application {
     public Stage stage;
     public ScreenController screenController; //For replacing EVERYTHING
     public NodeController nodeController; //For just replacing nodes (primarily in the central pane)
-    public BorderPane bp;
-    public ButtonBar bb;
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -29,13 +28,8 @@ public class Main extends Application {
         screenController = new ScreenController(scene); //not using, currently
         screenController.addScreen("frame", FXMLLoader.load(getClass().getResource("../resources/main/frame.fxml")));
         switchScreen("frame");
-        bp = ((BorderPane) scene.getRoot());
-        bb = (ButtonBar) bp.getTop();
 
-        NodeController.me.activate("tiles-panel", bp, event -> {
-            bp.getChildren().remove(NodeController.me.node("tiles-panel"));
-            bp.setCenter(NodeController.me.node("tiles-panel"));
-        });
+        NodeController.me.activate("tiles-panel", Controller.me.central);
         primaryStage.show();
     }
 

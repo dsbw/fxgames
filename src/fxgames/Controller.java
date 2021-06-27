@@ -18,6 +18,7 @@ public class Controller {
         nodeController = new NodeController();
         loadNode("tiles-panel", "/resources/main/tilespanel.fxml");
         loadNode("tic-tac-toe", "/resources/ttt/tttgrid.fxml");
+        loadNode("dungeon-slippers", "/resources/dunslip/ds-main.fxml");
     }
 
     public void loadNode(String name, String resource) {
@@ -30,10 +31,7 @@ public class Controller {
 
     public void navigateBackwards(ActionEvent e) {
         if (nodeController.getActive() != nodeController.node("tiles-panel"))
-            NodeController.me.activate("tiles-panel", Main.me.bp, event -> {
-                Main.me.bp.getChildren().remove(NodeController.me.node("tiles-panel"));
-                Main.me.bp.setCenter(NodeController.me.node("tiles-panel"));
-            });
+            NodeController.me.activate("tiles-panel", central);
     }
 
     public void issueCommand(ActionEvent e) {

@@ -1,9 +1,6 @@
 package fxgames;
 
-import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
+import javafx.animation.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
@@ -13,10 +10,12 @@ import javafx.util.Duration;
 
 import javax.swing.*;
 import java.util.HashMap;
+import java.util.Random;
 
 public class NodeController {
 
     public static NodeController me;
+    public Random rand = new Random();
 
     public NodeController() {
         me = this;
@@ -28,39 +27,99 @@ public class NodeController {
 
     private Node active;
     private final HashMap<String, Parent> nodeMap = new HashMap<>();
+
     protected void addNode(String name, Parent node) {
         nodeMap.put(name, node);
     }
 
     private final HashMap<Node, EventHandler<ActionEvent>> handlerMap = new HashMap<Node, EventHandler<ActionEvent>>();
-    public void addHandler(Node node, EventHandler<ActionEvent> eh) { handlerMap.put(node, eh);}
-    public EventHandler<ActionEvent> getHandler(Node node) {return handlerMap.get(node);}
+
+    public void addHandler(Node node, EventHandler<ActionEvent> eh) {
+        handlerMap.put(node, eh);
+    }
+
+    public EventHandler<ActionEvent> getHandler(Node node) {
+        return handlerMap.get(node);
+    }
 
     protected void removeNode(String name) {
         nodeMap.remove(name);
     }
 
     protected void activate(String name, Pane owner) {
-        Node node  = nodeMap.get(name);
+        Node node = nodeMap.get(name);
         activate(name, owner, event -> {
+            var outro = owner.getChildren().get(0);
+            double x = outro.getLayoutX();
+            double o = outro.getOpacity();
+            owner.getChildren().removeAll();
             owner.getChildren().setAll(node);
+            outro.setLayoutX(x);
+            outro.setOpacity(o);
         });
     }
 
     protected void activate(String name, Pane owner, EventHandler<ActionEvent> e) {
-        Node node  = nodeMap.get(name);
-        node.translateXProperty().set(owner.getWidth());
+        Node node = nodeMap.get(name);
+        node.opacityProperty().set(100);
+        node.translateXProperty().set(0);
         owner.getChildren().remove(node);
         owner.getChildren().add(node);
 
-        KeyValue kv = new KeyValue(node.translateXProperty(), 0, Interpolator.EASE_IN);
-        KeyFrame kf = new KeyFrame(Duration.seconds(0.25), kv);
+        int transitionType = rand.nextInt(2);
 
-        Timeline timeline = new Timeline();
-        timeline.getKeyFrames().add(kf);
-        timeline.setOnFinished(e);
-        timeline.play();
+        switch (transitionType) {
+            case 0 -> {
+                node.translateXProperty().set(owner.getWidth());
+                KeyValue kv = new KeyValue(node.translateXProperty(), 0, Interpolator.EASE_IN);
+                KeyFrame kf = new KeyFrame(Duration.seconds(0.25), kv);
+                Timeline timeline = new Timeline();
+                timeline.getKeyFrames().add(kf);
+                timeline.setOnFinished(e);
 
+                var outro = owner.getChildren().get(0);
+
+                if (outro == node) {
+                    timeline.play();
+                    return;
+                }
+
+                KeyValue kv2 = new KeyValue(outro.translateXProperty(), -owner.getWidth(), Interpolator.EASE_IN);
+                KeyFrame kf2 = new KeyFrame(Duration.seconds(0.25), kv2);
+                Timeline timeline2 = new Timeline();
+                timeline2.getKeyFrames().add(kf2);
+
+                var parallelTransition = new ParallelTransition();
+                parallelTransition.getChildren().addAll(
+                        timeline,
+                        timeline2
+                );
+                parallelTransition.play();
+            }
+            case 1 -> {
+                FadeTransition trans = new FadeTransition(Duration.seconds(0.5), node);
+                trans.setFromValue(0.0);
+                trans.setToValue(1.0);
+                trans.setOnFinished(e);
+                var outro = owner.getChildren().get(0);
+
+                if (outro == node) {
+                    trans.play();
+                    return;
+                }
+
+                var trans2 = new FadeTransition(Duration.seconds(0.5), outro);
+                trans2.setFromValue(1.0);
+                trans2.setToValue(0.0);
+
+                var parallelTransition = new ParallelTransition();
+                parallelTransition.getChildren().addAll(
+                        trans,
+                        trans2
+                );
+                parallelTransition.play();
+            }
+        }
         active = node;
     }
 

@@ -37,5 +37,11 @@ In this first commit, you have the complete product of the first 15 "chapters", 
 
 Part II will have its own branch, and each commit will reflect a "chapter", as we build a more complex game, the rules of which we don't even know up front.
 
+## Part II: Dungeon Slippers
+
+In part II, branch name "dunslip", we'll build a puzzle game that allows the player to move a token around a board in an attempt to reach the exit.
+
+I'll add code on an entry-by-entry basis so you can see exactly what changed.
+
 
 [1]: https://blakefx.medium.com/
