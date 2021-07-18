@@ -4,17 +4,13 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-import fxgames.Controller;
 
 public class Main extends Application {
 
     public static Main me;
     public Stage stage;
     public ScreenController screenController; //For replacing EVERYTHING
-    public NodeController nodeController; //For just replacing nodes (primarily in the central pane)
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -30,6 +26,7 @@ public class Main extends Application {
         switchScreen("frame");
 
         NodeController.me.activate("tiles-panel", Controller.me.central);
+
         primaryStage.show();
     }
 
