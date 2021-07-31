@@ -41,7 +41,9 @@ Part II will have its own branch, and each commit will reflect a "chapter", as w
 
 In part II, branch name "dunslip", we'll build a puzzle game that allows the player to move a token around a board in an attempt to reach the exit.
 
-I'll add code on an entry-by-entry basis so you can see exactly what changed.
+I'll add code on an entry-by-entry basis so you can see exactly what changed. I did forget to add in the (very basic) ds-main.fxml in resoureces/dunslip until 2.3. Whoops!
 
+I'm doing this part of the "book" at [hashnode][2].
 
 [1]: https://blakefx.medium.com/
+[2]: https://blake.hashnode.dev/

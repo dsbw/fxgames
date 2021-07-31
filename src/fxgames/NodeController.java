@@ -5,6 +5,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 
@@ -57,6 +58,12 @@ public class NodeController {
             outro.setLayoutX(x);
             outro.setOpacity(o);
         });
+        if (owner instanceof javafx.scene.layout.AnchorPane) {
+            AnchorPane.setTopAnchor(node, 0.0);
+            AnchorPane.setBottomAnchor(node, 0.0);
+            AnchorPane.setLeftAnchor(node, 0.0);
+            AnchorPane.setRightAnchor(node, 0.0);
+        }
     }
 
     protected void activate(String name, Pane owner, EventHandler<ActionEvent> e) {
