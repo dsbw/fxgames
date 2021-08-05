@@ -25,7 +25,7 @@ public class GridTest {
         @Override
         public void start(Stage primaryStage) throws Exception {
             stage = primaryStage;
-            g = new Grid(3, 3);
+            g = new Grid(3, 5);
             stage.setScene(new Scene(g));
             System.out.println(g.heightProperty().doubleValue());
             stage.setOnShown(l -> {
@@ -58,7 +58,7 @@ public class GridTest {
     @Test
     public void boundRow() {
         assertEquals(0, g.boundRow(-1), "Row cannot be less than 0.");
-        assertEquals(2, g.boundRow(100), "Row should max out at 2.");
+        assertEquals(4, g.boundRow(100), "Row should max out at 2.");
     }
 
     @Test
@@ -68,7 +68,7 @@ public class GridTest {
 
     @Test
     public void rowHeight() {
-        assertEquals(g.heightProperty().doubleValue()/3, g.rowHeight(), "Row height should be one third of grid height.");
+        assertEquals(g.heightProperty().doubleValue()/5, g.rowHeight(), "Row height should be one fifth of grid height.");
     }
 
     @Test
@@ -79,8 +79,8 @@ public class GridTest {
         double h = g.heightProperty().doubleValue();
         double w = g.widthProperty().doubleValue();
         Coord d = g.getCoord(h, w);
-        assertEquals(d.x, 2);
-        assertEquals(d.y, 2);
+        assertEquals(d.x, 1);
+        assertEquals(d.y, 4);
     }
 
 }

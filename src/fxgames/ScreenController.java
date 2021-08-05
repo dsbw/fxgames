@@ -1,9 +1,16 @@
 package fxgames;
 
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 
 import java.util.HashMap;
+
+import static javafx.scene.input.MouseEvent.*;
 
 public class ScreenController {
     private final HashMap<String, Pane> screenMap = new HashMap<>();
@@ -16,6 +23,7 @@ public class ScreenController {
     protected void addScreen(String name, Pane pane) {
         screenMap.put(name, pane);
     }
+
 
     protected void removeScreen(String name) {
         screenMap.remove(name);
