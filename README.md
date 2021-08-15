@@ -1,14 +1,12 @@
 # fxGames
 
-I cannot use alcohol as an excuse, but this code (and the accompanying blog ["FX My Life"][1]) are my stream-of-consciousness meander through JavaFX. It's like Jack Kerouac and William S. Burroughs writing code and talking to themselves about it! (It really isn't.)
-
-But seriously, it ain't pretty and it don't always make sense.
+What is this? This is a gonzo programming project, where I deliriously (though without intoxicants) blunder my way through the JavaFX library to see what I can make it do. Along the way, I'm rediscovering "best practices", and incidentally exploring features of Java I've only lightly touched on in the past.
 
 My rationale is highly personal: 
 
 1. I still like building native, desktop apps, and have actual use for same.
 2. JavaFX is a big beast, but it seems well-supported by a relatively broad community of users.
-3. But I'm likely to do any serious coding in Clojure.
+3. But I'm likely to do any serious coding NOT in Clojure.
 4. Doing things like this in Java teach me JavaFX so that I can take the knowledge and go back to my real work in Clojure.
 5. Working in Java generally reminds me of how much more productive life is in Clojure.
 6. I mean, seriously. Java has massive ecosystems built-up to solve things that just never come up in Clojure.
