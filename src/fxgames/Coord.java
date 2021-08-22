@@ -8,4 +8,12 @@ public class Coord {
         x = aX;
         y = aY;
     }
+
+    @Override
+    public String toString() {
+        return "Coord{" +
+                "x=" + x +
+                ", y=" + y +
+                '}';
+    }
 }

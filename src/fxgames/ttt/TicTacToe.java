@@ -184,4 +184,8 @@ public class TicTacToe implements Serializable {
     public String get(int x, int y) {
         return state[y][x];
     }
+
+    public boolean canAccept(String s, int x, int y) {
+        return true;
+    }
 }

@@ -1,5 +1,6 @@
 package fxgames.ttt;
 
+import fxgames.Grid;
 import fxgames.Main;
 import fxgames.NodeController;
 import javafx.beans.value.ChangeListener;
@@ -28,7 +29,7 @@ public class TttController {
     @FXML
     public transient ImageView O;
     @FXML
-    public GridPane board;
+    public Grid<String> board;
     @FXML
     public Node outerGroup;
     @FXML
@@ -54,6 +55,7 @@ public class TttController {
 
     private Line line = new Line();
     private TicTacToe game = new TicTacToe();
+    private TttViewModel tttvm;
 
     private ChangeListener<Boolean> nameChangeListener = new ChangeListener<Boolean>() {
         @Override
@@ -73,6 +75,8 @@ public class TttController {
 
         player1.focusedProperty().addListener(nameChangeListener);
         player2.focusedProperty().addListener(nameChangeListener);
+
+        tttvm = new TttViewModel(board, game);
 
         NodeController.me.addHandler(outerGroup, (e) -> {
             var id = ((Button) e.getTarget()).getId();
@@ -230,9 +234,9 @@ public class TttController {
         return val;
     }
 
-    public void handleOnDragOver(DragEvent event) {
+    /*public void handleOnDragOver(DragEvent event) {
         int column = getCoord(board.getWidth(), event.getX(), board.getRowCount());
-        int row = getCoord(board.getHeight(), event.getY(), board.getColumnCount());
+        int row = getCoord(board.getHeight(), event.getY(), board.getColCount());
 
         if ((column >= 0 && column <= 2) &&
                 (row >= 0 && row <= 2) &&
@@ -242,11 +246,11 @@ public class TttController {
             }
         }
         event.consume();
-    }
+    }*/
 
     public void handleOnDrop(DragEvent event) {
         int row = getCoord(board.getWidth(), event.getX(), board.getRowCount());
-        int column = getCoord(board.getHeight(), event.getY(), board.getColumnCount());
+        int column = getCoord(board.getHeight(), event.getY(), board.getColCount());
 
         try {
             game.addPiece(event.getDragboard().getString(), column, row);

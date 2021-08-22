@@ -1,21 +1,19 @@
 package fxgames;
 
-import com.sun.javafx.binding.BidirectionalBinding;
 import javafx.beans.InvalidationListener;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
-
-import javax.naming.Binding;
 import java.util.ArrayList;
 
-public class Grid extends StackPane {
+public class Grid<T> extends StackPane {
 
     InvalidationListener redraw = observable -> setBackgrounds();
 
@@ -48,24 +46,24 @@ public class Grid extends StackPane {
         borderPane.maxHeightProperty().bind(heightProperty());
         this.getChildren().add(borderPane);
 
-        this.setOnMouseEntered(event -> {
-            hoverCoord = this.getCoord(event.getX(), event.getX());
-            setBackgrounds();
-        });
+        this.setOnMouseEntered(event -> setHoverCoord(event.getX(), event.getY()));
+        this.setOnMouseExited(event -> clearHoverCoord());
+        this.setOnMouseMoved(event -> setHoverCoord(event.getX(), event.getY()));
 
-        this.setOnMouseExited(event -> {
-            hoverCoord = null;
-            setBackgrounds();
+        this.setOnDragEntered(event -> setHoverCoord(event.getX(), event.getY()));
+        this.setOnDragOver(event -> {
+            setHoverCoord(event.getX(), event.getY());
+            if (onGridDragMove != null)
+                if (onGridDragMove.handle (onProcessDragBoard.handle(event), hoverCoord.x, hoverCoord.y))
+                    event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
         });
+        this.setOnDragDropped(event -> {
+            setHoverCoord(event.getX(), event.getY());
+            if (onGridDragDrop != null)
+                onGridDragDrop.handle( onProcessDragBoard.handle(event), hoverCoord.x, hoverCoord.y);
+        });
+        this.setOnDragExited(event -> clearHoverCoord());
 
-        this.setOnMouseMoved(event -> {
-            int x = getAxisVal(event.getX(), true);
-            int y = getAxisVal(event.getY(), false);
-            if (hoverCoord.x != x || hoverCoord.y != y) {
-                this.setCoord(hoverCoord, event.getX(), event.getY());
-                this.setBackgrounds();
-            }
-        });
         colorPattern = FXCollections.observableArrayList(Color.RED, Color.BLUE);
         colorPattern.addListener(redraw);
         _borderThickness.addListener(redraw);
@@ -73,6 +71,40 @@ public class Grid extends StackPane {
         _gridLineThickness.addListener(redraw);
         _gridLineColor.addListener(redraw);
         _hoverColor.addListener(redraw);
+    }
+
+    public ProcessGridDragBoard<T> onProcessDragBoard;
+    public void setProcessDragBoard(ProcessGridDragBoard<T> gde) {
+        this.onProcessDragBoard = gde;
+    }
+
+    public GridDragMove<T> onGridDragMove;
+    public void setOnGridDragMove(GridDragMove<T> e) {
+        this.onGridDragMove = e;
+    }
+
+    public GridDragDrop<T> onGridDragDrop;
+    public void setOnGridDragDrop(GridDragDrop<T> e) {
+        this.onGridDragDrop = e;
+    }
+
+    public void setHoverCoord(double x, double y) {
+        if (hoverCoord == null) {
+            hoverCoord = this.getCoord(x, y);
+        } else {
+            int nx = getAxisVal(x, true);
+            int ny = getAxisVal(y, false);
+            if (hoverCoord.x != nx || hoverCoord.y != ny) {
+                hoverCoord.x = nx;
+                hoverCoord.y = ny;
+            }
+        }
+        setBackgrounds();
+    }
+
+    public void clearHoverCoord() {
+        hoverCoord = null;
+        setBackgrounds();
     }
 
     public BackgroundFill FillForCoord(int x, int y, Color color) {
@@ -87,7 +119,7 @@ public class Grid extends StackPane {
         int rows = _rowCount.get();
         int cols = _colCount.get();
         int numColors = colorPattern.size();
-        if(numColors == 0) return;
+        if (numColors == 0) return;
         BackgroundFill[] fills = new BackgroundFill[rows * cols + 1];
         for (int i = 0; i < cols; i++)
             for (int j = 0; j < rows; j++) {
@@ -111,7 +143,7 @@ public class Grid extends StackPane {
             line.setStroke(_gridLineColor.get());
             line.setStrokeWidth(_gridLineThickness.get());
             borderPane.getChildren().add(line);
-            }
+        }
 
         for (int j = 1; j < rows; j++) {
             Line line = new Line(0, j * rowHeight() - 1, this.widthProperty().doubleValue(), j * rowHeight() - 1);
@@ -169,11 +201,14 @@ public class Grid extends StackPane {
     public final void setColorPattern(ArrayList<Color> cp) {
         colorPattern.clear();
         colorPattern.addAll(cp);
-    };
+    }
+
+    ;
 
     public final void setBorderColor(Color c) {
         _borderColor.set(c);
     }
+
     public final void setBorderThickness(int bw) {
         _borderThickness.set(bw);
     }
@@ -181,9 +216,11 @@ public class Grid extends StackPane {
     public final void setGridLineColor(Color c) {
         _gridLineColor.set(c);
     }
+
     public final void setGridLineThickness(int glw) {
         _gridLineThickness.set(glw);
     }
+
     public final void setHoverColor(Color c) {
         _hoverColor.set(c);
     }
