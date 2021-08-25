@@ -1,6 +1,8 @@
 package fxgames;
 
+import javafx.scene.input.DragEvent;
+
 @FunctionalInterface
-public interface GridDragMove<T> {
-    public boolean handle(T var1, int x, int y);
+public interface GridDragMove {
+    public boolean handle(DragEvent var1, int x, int y);
 }

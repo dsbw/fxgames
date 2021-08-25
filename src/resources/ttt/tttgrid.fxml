@@ -19,7 +19,7 @@
    <center>
       <Group fx:id="innerGroup">
          <children>
-            <Grid fx:id="board"  layoutX="0.5" layoutY="0.5" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" onDragDropped="#handleOnDrop" prefHeight="400.0" prefWidth="400.0" colCount="3" rowCount="3">
+            <Grid fx:id="board"  layoutX="0.5" layoutY="0.5" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="400.0" prefWidth="400.0" colCount="3" rowCount="3">
             </Grid>
          </children>
       </Group>

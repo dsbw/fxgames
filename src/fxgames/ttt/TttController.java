@@ -29,7 +29,7 @@ public class TttController {
     @FXML
     public transient ImageView O;
     @FXML
-    public Grid<String> board;
+    public Grid board;
     @FXML
     public Node outerGroup;
     @FXML
@@ -63,7 +63,7 @@ public class TttController {
             try {
                 System.out.println("Calling automove!");
                 game.automove();
-                draw();
+                //draw();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -76,7 +76,7 @@ public class TttController {
         player1.focusedProperty().addListener(nameChangeListener);
         player2.focusedProperty().addListener(nameChangeListener);
 
-        tttvm = new TttViewModel(board, game);
+        tttvm = new TttViewModel(board, game, this);
 
         NodeController.me.addHandler(outerGroup, (e) -> {
             var id = ((Button) e.getTarget()).getId();
@@ -90,7 +90,7 @@ public class TttController {
                         } catch (Exception exception) {
                             exception.printStackTrace();
                         }
-                        draw();
+                        //draw();
                         break;
                     case "load":
                         file = getFilename(true);
@@ -101,7 +101,7 @@ public class TttController {
                                 game = (TicTacToe) in.readObject();
                                 in.close();
                                 fileIn.close();
-                                draw();
+                                //draw();
                             } catch (IOException | ClassNotFoundException i) {
                                 i.printStackTrace();
                                 return;
@@ -136,7 +136,7 @@ public class TttController {
         else return fileChooser.showSaveDialog(Main.me.stage);
     }
 
-    public void draw() {
+    /*public void draw() {
         innerGroup.getChildren().remove(line);
         for (int i = board.getChildren().size() - 1; i > 0; i--) board.getChildren().remove(i);
 
@@ -166,7 +166,7 @@ public class TttController {
         } else {
             XoverO.setRotate(180);
         }
-    }
+    }*/
 
     public void drawVictorySlash() {
         if (!game.winner.equals("")) {
@@ -248,7 +248,7 @@ public class TttController {
         event.consume();
     }*/
 
-    public void handleOnDrop(DragEvent event) {
+    /*public void handleOnDrop(DragEvent event) {
         int row = getCoord(board.getWidth(), event.getX(), board.getRowCount());
         int column = getCoord(board.getHeight(), event.getY(), board.getColCount());
 
@@ -258,7 +258,7 @@ public class TttController {
             e.printStackTrace();
         }
         draw();
-    }
+    }*/
 
     public boolean handler(ActionEvent e) {
         System.out.println(e);
@@ -278,7 +278,7 @@ public class TttController {
 
     public void togglePlayerX() {
         game.togglePlayerX();
-        draw();
+        //draw();
     }
 }
 

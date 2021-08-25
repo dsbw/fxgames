@@ -186,6 +186,8 @@ public class TicTacToe implements Serializable {
     }
 
     public boolean canAccept(String s, int x, int y) {
-        return true;
+        System.out.printf("%s: %d, %d", s, x, y);
+        System.out.println(Arrays.deepToString(state));
+        return (state[y][x]==null);
     }
 }

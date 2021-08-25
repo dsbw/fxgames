@@ -13,7 +13,7 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import java.util.ArrayList;
 
-public class Grid<T> extends StackPane {
+public class Grid extends StackPane {
 
     InvalidationListener redraw = observable -> setBackgrounds();
 
@@ -33,6 +33,8 @@ public class Grid<T> extends StackPane {
     private final SimpleObjectProperty<Color> _gridLineColor = new SimpleObjectProperty<>(Color.BLACK);
     private final SimpleObjectProperty<Color> _hoverColor = new SimpleObjectProperty<>(Color.YELLOW);
 
+    public final Pane piecePane = new Pane();
+
     public Grid(int columns, int rows) {
         setColCount(columns);
         setRowCount(rows);
@@ -46,6 +48,10 @@ public class Grid<T> extends StackPane {
         borderPane.maxHeightProperty().bind(heightProperty());
         this.getChildren().add(borderPane);
 
+        piecePane.maxWidthProperty().bind(widthProperty());
+        piecePane.maxHeightProperty().bind(heightProperty());
+        this.getChildren().add(piecePane);
+
         this.setOnMouseEntered(event -> setHoverCoord(event.getX(), event.getY()));
         this.setOnMouseExited(event -> clearHoverCoord());
         this.setOnMouseMoved(event -> setHoverCoord(event.getX(), event.getY()));
@@ -54,13 +60,13 @@ public class Grid<T> extends StackPane {
         this.setOnDragOver(event -> {
             setHoverCoord(event.getX(), event.getY());
             if (onGridDragMove != null)
-                if (onGridDragMove.handle (onProcessDragBoard.handle(event), hoverCoord.x, hoverCoord.y))
+                if (onGridDragMove.handle (event, hoverCoord.x, hoverCoord.y))
                     event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
         });
         this.setOnDragDropped(event -> {
             setHoverCoord(event.getX(), event.getY());
             if (onGridDragDrop != null)
-                onGridDragDrop.handle( onProcessDragBoard.handle(event), hoverCoord.x, hoverCoord.y);
+                onGridDragDrop.handle(event, hoverCoord.x, hoverCoord.y);
         });
         this.setOnDragExited(event -> clearHoverCoord());
 
@@ -73,18 +79,13 @@ public class Grid<T> extends StackPane {
         _hoverColor.addListener(redraw);
     }
 
-    public ProcessGridDragBoard<T> onProcessDragBoard;
-    public void setProcessDragBoard(ProcessGridDragBoard<T> gde) {
-        this.onProcessDragBoard = gde;
-    }
-
-    public GridDragMove<T> onGridDragMove;
-    public void setOnGridDragMove(GridDragMove<T> e) {
+    public GridDragMove onGridDragMove;
+    public void setOnGridDragMove(GridDragMove e) {
         this.onGridDragMove = e;
     }
 
-    public GridDragDrop<T> onGridDragDrop;
-    public void setOnGridDragDrop(GridDragDrop<T> e) {
+    public GridDragDrop onGridDragDrop;
+    public void setOnGridDragDrop(GridDragDrop e) {
         this.onGridDragDrop = e;
     }
 
@@ -203,8 +204,6 @@ public class Grid<T> extends StackPane {
         colorPattern.addAll(cp);
     }
 
-    ;
-
     public final void setBorderColor(Color c) {
         _borderColor.set(c);
     }
@@ -225,4 +224,19 @@ public class Grid<T> extends StackPane {
         _hoverColor.set(c);
     }
 
+    public final double cellWidth() {
+        return getWidth() / getColCount();
+    }
+
+    public final double cellHeight() {
+        return getHeight() / getRowCount();
+    }
+
+    public final double cellLocalX(int i) {
+        return i * cellWidth();
+    }
+
+    public final double cellLocalY(int j) {
+        return j * cellHeight();
+    }
 }
