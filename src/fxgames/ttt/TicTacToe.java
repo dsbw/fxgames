@@ -4,6 +4,7 @@ import fxgames.Coord;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class TicTacToe implements Serializable {
     private String[][] state = new String[3][3];
@@ -20,6 +21,8 @@ public class TicTacToe implements Serializable {
     public int vy;
     public int vxd;
     public int vyd;
+
+    private transient List<Consumer<TicTacToe>> consumers = new ArrayList<>();
 
     public TicTacToe() {
         resetGame();
@@ -40,10 +43,25 @@ public class TicTacToe implements Serializable {
         playerTwoName = "";
     }
 
+    public void addConsumer(Consumer<TicTacToe> l) {
+        if (consumers == null) consumers = new ArrayList<>();
+        consumers.add(l);
+    }
+
+    public void removeConsumer(Consumer<TicTacToe> l) {
+        consumers.remove(l);
+    }
+
+    public void alertConsumers() {
+        consumers.forEach(c -> c.accept(this));
+    }
+
+
     public void newGame() {
         state = new String[3][3];
         winner = "";
         turn = "X"; //X always goes first
+        alertConsumers();
     }
 
     public void resetGame() {
@@ -54,6 +72,7 @@ public class TicTacToe implements Serializable {
         playerTwoName = "";
         playerTwoWins = 0;
         ties = 0;
+        alertConsumers();
     }
 
     private String bstr(int x, int y, int xd, int yd) {
@@ -175,6 +194,7 @@ public class TicTacToe implements Serializable {
             turn = "X";
         }
         automove();
+        alertConsumers();
     }
 
     public void togglePlayerX() {
@@ -186,8 +206,6 @@ public class TicTacToe implements Serializable {
     }
 
     public boolean canAccept(String s, int x, int y) {
-        System.out.printf("%s: %d, %d", s, x, y);
-        System.out.println(Arrays.deepToString(state));
-        return (state[y][x]==null);
+        return (state[y][x] == null);
     }
 }

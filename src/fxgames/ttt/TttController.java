@@ -5,7 +5,6 @@ import fxgames.Main;
 import fxgames.NodeController;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -63,7 +62,6 @@ public class TttController {
             try {
                 System.out.println("Calling automove!");
                 game.automove();
-                //draw();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -77,6 +75,7 @@ public class TttController {
         player2.focusedProperty().addListener(nameChangeListener);
 
         tttvm = new TttViewModel(board, game, this);
+        game.addConsumer((game) -> this.draw());
 
         NodeController.me.addHandler(outerGroup, (e) -> {
             var id = ((Button) e.getTarget()).getId();
@@ -90,7 +89,6 @@ public class TttController {
                         } catch (Exception exception) {
                             exception.printStackTrace();
                         }
-                        //draw();
                         break;
                     case "load":
                         file = getFilename(true);
@@ -101,7 +99,11 @@ public class TttController {
                                 game = (TicTacToe) in.readObject();
                                 in.close();
                                 fileIn.close();
-                                //draw();
+                                player1.setText(game.playerOneName);
+                                player2.setText(game.playerTwoName);
+                                game.addConsumer((game) -> this.draw());
+                                tttvm = new TttViewModel(board, game, this);
+                                game.alertConsumers();
                             } catch (IOException | ClassNotFoundException i) {
                                 i.printStackTrace();
                                 return;
@@ -128,36 +130,14 @@ public class TttController {
         });
     }
 
-    public File getFilename(boolean mustExist) {
-        FileChooser fileChooser = new FileChooser();
-        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("tic-tac-toe files (*.ttt)", "*.ttt");
-        fileChooser.getExtensionFilters().add(extFilter);
-        if (mustExist) return fileChooser.showOpenDialog(Main.me.stage);
-        else return fileChooser.showSaveDialog(Main.me.stage);
-    }
-
-    /*public void draw() {
-        innerGroup.getChildren().remove(line);
-        for (int i = board.getChildren().size() - 1; i > 0; i--) board.getChildren().remove(i);
-
-        for (var i = 0; i < 3; i++) {
-            for (var j = 0; j < 3; j++)
-                if (game.get(i, j) != null) {
-                    ImageView xo = new ImageView();
-
-                    if (game.get(i, j).equals("X"))
-                        xo.setImage(X.getImage());
-                    else if (game.get(i, j).equals("O"))
-                        xo.setImage(O.getImage());
-                    xo.setFitWidth(Math.round(board.getWidth() / 3));
-                    xo.setFitHeight(Math.round(board.getHeight() / 3));
-                    GridPane.setRowIndex(xo, i);
-                    GridPane.setColumnIndex(xo, j);
-                    board.getChildren().addAll(xo);
-                }
+    public void draw() {
+        if (!game.winner.equals("")) {
+            if (game.winner.equals("-")) {
+                message.setText("Game over! " + "It's a tie! Again!");
+                return;
+            }
+            message.setText("Game over! " + game.winner + " wins!");
         }
-        drawVictorySlash();
-
         p1Score.setText(String.valueOf(game.playerOneWins));
         p2Score.setText(String.valueOf(game.playerTwoWins));
         tieScore.setText(String.valueOf(game.ties));
@@ -166,43 +146,14 @@ public class TttController {
         } else {
             XoverO.setRotate(180);
         }
-    }*/
+    }
 
-    public void drawVictorySlash() {
-        if (!game.winner.equals("")) {
-            if (game.winner.equals("-")) {
-                message.setText("Game over! " + "It's a tie! Again!");
-                return;
-            }
-            message.setText("Game over! " + game.winner + " wins!");
-            var bw = board.getWidth();
-            var bh = board.getHeight();
-            var cw = bw / 3;
-            var ch = bh / 3;
-            var wxs = 0.0;
-            var wys = 0.0;
-            var wxe = bw;
-            var wye = bh;
-
-            innerGroup.getChildren().add(line);
-            line.getStyleClass().add("line");
-            if (game.vxd == 1 && game.vyd == 1) {
-                //don't actually have to do anything since these are the defaults, but lets leave the case in here
-            } else if (game.vxd == -1 && game.vyd == 1) {
-                wys = bh;
-                wye = 0;
-            } else if (game.vxd == 1) {
-                wys = (game.vy * ch) + (ch / 2);
-                wye = wys;
-            } else if (game.vyd == 1) {
-                wxs = (game.vx * cw) + (cw / 2);
-                wxe = wxs;
-            }
-            line.setStartX(wxs);
-            line.setStartY(wys);
-            line.setEndX(wxe);
-            line.setEndY(wye);
-        }
+    public File getFilename(boolean mustExist) {
+        FileChooser fileChooser = new FileChooser();
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("tic-tac-toe files (*.ttt)", "*.ttt");
+        fileChooser.getExtensionFilters().add(extFilter);
+        if (mustExist) return fileChooser.showOpenDialog(Main.me.stage);
+        else return fileChooser.showSaveDialog(Main.me.stage);
     }
 
     public void handleOnDragDetected(MouseEvent event) {
@@ -223,48 +174,6 @@ public class TttController {
         }
     }
 
-    public int getCoord(double width, double coord, int numberOfSections) {
-        long dim = Math.round(width / numberOfSections);
-        long border = dim;
-        int val = 0;
-        while (coord > border) {
-            border += dim;
-            val++;
-        }
-        return val;
-    }
-
-    /*public void handleOnDragOver(DragEvent event) {
-        int column = getCoord(board.getWidth(), event.getX(), board.getRowCount());
-        int row = getCoord(board.getHeight(), event.getY(), board.getColCount());
-
-        if ((column >= 0 && column <= 2) &&
-                (row >= 0 && row <= 2) &&
-                (game.get(row, column) == null)) {
-            if (event.getGestureSource() != board && event.getDragboard().hasString()) {
-                event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
-            }
-        }
-        event.consume();
-    }*/
-
-    /*public void handleOnDrop(DragEvent event) {
-        int row = getCoord(board.getWidth(), event.getX(), board.getRowCount());
-        int column = getCoord(board.getHeight(), event.getY(), board.getColCount());
-
-        try {
-            game.addPiece(event.getDragboard().getString(), column, row);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        draw();
-    }*/
-
-    public boolean handler(ActionEvent e) {
-        System.out.println(e);
-        return false;
-    }
-
     public void nameChange(KeyEvent e) {
         String t = (((TextField) e.getTarget()).getText());
         if (e.getTarget() == player1) {
@@ -278,7 +187,7 @@ public class TttController {
 
     public void togglePlayerX() {
         game.togglePlayerX();
-        //draw();
+        draw();
     }
 }
 

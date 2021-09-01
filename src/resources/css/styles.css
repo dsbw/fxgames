@@ -9,7 +9,7 @@
 }
 
 .line {
-    -fx-stroke: red;
+    -fx-stroke: green;
     -fx-stroke-width: 8;
     -fx-stroke-line-cap: round;
 }

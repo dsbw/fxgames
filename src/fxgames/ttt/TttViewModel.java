@@ -3,7 +3,9 @@ package fxgames.ttt;
 import fxgames.Grid;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
-import javafx.scene.layout.GridPane;
+import javafx.scene.shape.Line;
+
+import java.util.Objects;
 
 public class TttViewModel {
 
@@ -22,6 +24,8 @@ public class TttViewModel {
             game.addPiece(dragBoardToPiece(var1), x, y);
             draw();
         });
+
+        game.addConsumer((game) -> this.draw());
     }
 
     public String dragBoardToPiece(DragEvent de) {
@@ -29,7 +33,7 @@ public class TttViewModel {
     }
 
     public void draw() {
-        board.piecePane.getChildren().removeAll();
+        board.piecePane.getChildren().clear();
 
         for (var i = 0; i < 3; i++) {
             for (var j = 0; j < 3; j++)
@@ -47,6 +51,36 @@ public class TttViewModel {
                     board.piecePane.getChildren().addAll(xo);
                 }
         }
+        if (Objects.equals(game.winner, "X") || Objects.equals(game.winner, "O"))
+            drawVictorySlash();
     }
 
+    public void drawVictorySlash() {
+        var wxs = 0.0;
+        var wys = 0.0;
+        var wxe = board.getWidth();
+        var wye = board.getHeight();
+
+        Line line = new Line();
+        board.piecePane.getChildren().add(line);
+        line.getStyleClass().add("line");
+        if (game.vxd == 1 && game.vyd == 1) {
+            //don't actually have to do anything since these are the defaults, but lets leave the case in here
+        } else if (game.vxd == -1 && game.vyd == 1) {
+            wys = board.getHeight();
+            wye = 0;
+        } else if (game.vyd == 1) {
+            wys = (game.vx * board.cellWidth()) + (board.cellWidth() / 2);
+            wye = wys;
+        } else if (game.vxd == 1) {
+            wxs = (game.vy * board.cellHeight()) + (board.cellHeight() / 2);
+            wxe = wxs;
+        }
+        line.setStartX(wxs);
+        line.setStartY(wys);
+        line.setEndX(wxe);
+        line.setEndY(wye);
+    }
 }
+
+
