@@ -11,8 +11,8 @@ public class TileController {
     public void openTTT(MouseEvent mouseEvent) {
         openGame("tic-tac-toe");
     }
-
     public void openDunSlip(MouseEvent mouseEvent) {
         openGame("dungeon-slippers");
     }
+    public void openMaze(MouseEvent mouseEvent) {openGame("maze");}
 }

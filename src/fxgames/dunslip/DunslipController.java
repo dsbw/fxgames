@@ -21,7 +21,9 @@ public class DunslipController {
 
     @FXML
     public void randomize() {
-        int x = (int) (Math.random()*40+2);
+        grid1.setWallThickness(grid1.getWallThickness()+1);
+        System.out.printf("Set wall thickness to %d\n", grid1.getWallThickness());
+/*        int x = (int) (Math.random()*40+2);
         int y = (int) (Math.random()*40+2);
         System.out.printf("Setting grid to %d,%d\n", x, y);
         grid1.setColCount(x);
@@ -46,6 +48,6 @@ public class DunslipController {
         System.out.printf("Grid line width to =>%d\n", glw);
         grid1.setGridLineThickness(glw);
         grid1.setGridLineColor(new Color(Math.random(), Math.random(), Math.random(), 1));
-        grid1.setHoverColor(new Color(Math.random(), Math.random(), Math.random(), 1));
+        grid1.setHoverColor(new Color(Math.random(), Math.random(), Math.random(), 1));*/
     }
 }

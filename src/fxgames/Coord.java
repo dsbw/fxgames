@@ -9,6 +9,10 @@ public class Coord {
         y = aY;
     }
 
+    public static Coord RandCoord(int aX, int aY) {
+        return(new Coord((int)(Math.random()*aX), (int)(Math.random()*aY)));
+    }
+
     @Override
     public String toString() {
         return "Coord{" +

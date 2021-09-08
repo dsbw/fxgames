@@ -4,13 +4,10 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.jupiter.api.Assertions;
-
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,17 +24,33 @@ public class GridTest {
             stage = primaryStage;
             g = new Grid(3, 5);
             stage.setScene(new Scene(g));
-            System.out.println(g.heightProperty().doubleValue());
             stage.setOnShown(l -> {
                 Platform.runLater(() -> startupLatch.countDown());
             });
             stage.show();
         }
     }
+
+    public static void FXit(Runnable r) {
+        var semaphore = new Semaphore(0);
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                r.run();
+                semaphore.release();
+            }
+        });
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     @BeforeClass
     public static void initFX() throws Exception {
         startupLatch = new CountDownLatch(1);
-        new Thread(() -> Application.launch(TestApp.class, (String[])null)).start();
+        new Thread(() -> Application.launch(TestApp.class, (String[]) null)).start();
         Assertions.assertTrue(startupLatch.await(15, TimeUnit.SECONDS), "Timeout waiting for FX runtime to start");
     }
 
@@ -46,6 +59,13 @@ public class GridTest {
         Platform.runLater(() -> {
             stage.hide();
             Platform.exit();
+        });
+    }
+
+    @Before
+    public void reset() {
+        FXit(() -> {
+            g.setWallThickness(0);
         });
     }
 
@@ -63,12 +83,28 @@ public class GridTest {
 
     @Test
     public void colWidth() {
-        assertEquals(g.widthProperty().doubleValue()/3, g.colWidth(), "Column width should be one third of grid width.");
+        assertEquals(g.widthProperty().doubleValue() / 3, g.colWidth(), "Column width should be one third of grid width.");
     }
 
     @Test
     public void rowHeight() {
-        assertEquals(g.heightProperty().doubleValue()/5, g.rowHeight(), "Row height should be one fifth of grid height.");
+        assertEquals(g.heightProperty().doubleValue() / 5, g.rowHeight(), "Row height should be one fifth of grid height.");
+    }
+
+    @Test
+    public void colWidthWithWall() {
+        FXit(() -> {
+            g.setWallThickness(2);
+        });
+        assertEquals(g.widthProperty().doubleValue() / 3 - 2, g.wtColWidth(), "Column width should be one third of grid width less two pixels for walls.");
+    }
+
+    @Test
+    public void rowHeightWithWall() {
+        FXit(() -> {
+            g.setWallThickness(4);
+        });
+        assertEquals(g.heightProperty().doubleValue() / 5 - 4, g.wtRowHeight(), "Row height should be one fifth of grid height less four pixels for walls.");
     }
 
     @Test

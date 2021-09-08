@@ -19,6 +19,7 @@ public class Controller {
         loadNode("tiles-panel", "/resources/main/tilespanel.fxml");
         loadNode("tic-tac-toe", "/resources/ttt/tttgrid.fxml");
         loadNode("dungeon-slippers", "/resources/dunslip/ds-main.fxml");
+        loadNode("maze", "/resources/maze/amaze.fxml");
     }
 
     public void loadNode(String name, String resource) {

@@ -4,7 +4,6 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
@@ -32,6 +31,7 @@ public class Grid extends StackPane {
     private final SimpleIntegerProperty _gridLineThickness = new SimpleIntegerProperty(2);
     private final SimpleObjectProperty<Color> _gridLineColor = new SimpleObjectProperty<>(Color.BLACK);
     private final SimpleObjectProperty<Color> _hoverColor = new SimpleObjectProperty<>(Color.YELLOW);
+    private final SimpleIntegerProperty _wallThickness = new SimpleIntegerProperty(0);
 
     public final Pane piecePane = new Pane();
 
@@ -77,6 +77,7 @@ public class Grid extends StackPane {
         _gridLineThickness.addListener(redraw);
         _gridLineColor.addListener(redraw);
         _hoverColor.addListener(redraw);
+        _wallThickness.addListener(redraw);
     }
 
     public GridDragMove onGridDragMove;
@@ -110,10 +111,10 @@ public class Grid extends StackPane {
 
     public BackgroundFill FillForCoord(int x, int y, Color color) {
         return new BackgroundFill(color, CornerRadii.EMPTY,
-                new Insets(y * rowHeight(),
-                        widthProperty().doubleValue() - (colWidth() + colWidth() * x),
-                        heightProperty().doubleValue() - (rowHeight() + rowHeight() * y),
-                        x * colWidth()));
+                new Insets(y * rowHeight() + _wallThickness.get(),
+                        widthProperty().doubleValue() - (colWidth() + colWidth() * x) + _wallThickness.get(),
+                        heightProperty().doubleValue() - (rowHeight() + rowHeight() * y) + _wallThickness.get(),
+                        x * colWidth() + _wallThickness.get()));
     }
 
     public void setBackgrounds() {
@@ -162,13 +163,10 @@ public class Grid extends StackPane {
         return (v < 0) ? 0 : (v > _rowCount.getValue()) ? _rowCount.getValue() - 1 : (int) v;
     }
 
-    public double colWidth() {
-        return widthProperty().doubleValue() / _colCount.get();
-    }
-
-    public double rowHeight() {
-        return heightProperty().doubleValue() / _rowCount.get();
-    }
+    public double colWidth() { return widthProperty().doubleValue() / _colCount.get();}
+    public double rowHeight() { return heightProperty().doubleValue() / _rowCount.get();}
+    public double wtRowHeight() { return heightProperty().doubleValue() / _rowCount.get() - _wallThickness.get();}
+    public double wtColWidth() { return widthProperty().doubleValue() / _colCount.get() - _wallThickness.get();}
 
     public int getAxisVal(double w, boolean isX) {
         return isX ? boundCol(w / colWidth()) : boundRow(w / rowHeight());
@@ -220,6 +218,9 @@ public class Grid extends StackPane {
         _gridLineThickness.set(glw);
     }
 
+    public final int getWallThickness() {return _wallThickness.get();}
+    public final void setWallThickness(int wt) {_wallThickness.set(wt);}
+
     public final void setHoverColor(Color c) {
         _hoverColor.set(c);
     }
@@ -239,4 +240,5 @@ public class Grid extends StackPane {
     public final double cellLocalY(int j) {
         return j * cellHeight();
     }
+
 }
