@@ -5,12 +5,16 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
+
 import java.util.ArrayList;
+
+import static javafx.scene.paint.Color.WHITE;
 
 public class Grid extends StackPane {
 
@@ -32,6 +36,7 @@ public class Grid extends StackPane {
     private final SimpleObjectProperty<Color> _gridLineColor = new SimpleObjectProperty<>(Color.BLACK);
     private final SimpleObjectProperty<Color> _hoverColor = new SimpleObjectProperty<>(Color.YELLOW);
     private final SimpleIntegerProperty _wallThickness = new SimpleIntegerProperty(0);
+    private final SimpleObjectProperty<Color> _backgroundColor = new SimpleObjectProperty<>(Color.BLUE);
 
     public final Pane piecePane = new Pane();
 
@@ -60,7 +65,7 @@ public class Grid extends StackPane {
         this.setOnDragOver(event -> {
             setHoverCoord(event.getX(), event.getY());
             if (onGridDragMove != null)
-                if (onGridDragMove.handle (event, hoverCoord.x, hoverCoord.y))
+                if (onGridDragMove.handle(event, hoverCoord.x, hoverCoord.y))
                     event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
         });
         this.setOnDragDropped(event -> {
@@ -78,14 +83,17 @@ public class Grid extends StackPane {
         _gridLineColor.addListener(redraw);
         _hoverColor.addListener(redraw);
         _wallThickness.addListener(redraw);
+        _backgroundColor.addListener(redraw);
     }
 
     public GridDragMove onGridDragMove;
+
     public void setOnGridDragMove(GridDragMove e) {
         this.onGridDragMove = e;
     }
 
     public GridDragDrop onGridDragDrop;
+
     public void setOnGridDragDrop(GridDragDrop e) {
         this.onGridDragDrop = e;
     }
@@ -120,16 +128,23 @@ public class Grid extends StackPane {
     public void setBackgrounds() {
         int rows = _rowCount.get();
         int cols = _colCount.get();
+
+        Rectangle background = new Rectangle(0, 0, this.widthProperty().doubleValue(), this.heightProperty().doubleValue());
+
         int numColors = colorPattern.size();
         if (numColors == 0) return;
-        BackgroundFill[] fills = new BackgroundFill[rows * cols + 1];
+        background.setFill(WHITE);
+        borderPane.getChildren().add(background);
+
+        BackgroundFill[] fills = new BackgroundFill[rows * cols + 2];
+        fills[0] = new BackgroundFill(_backgroundColor.get(), CornerRadii.EMPTY, new Insets(0, 0, 0, 0));
         for (int i = 0; i < cols; i++)
             for (int j = 0; j < rows; j++) {
                 Color color = colorPattern.get(((i % numColors) + j) % numColors);
-                fills[j + (i * rows)] = FillForCoord(i, j, color);
+                fills[j + (i * rows) + 1] = FillForCoord(i, j, color);
             }
         if (hoverCoord != null) {
-            fills[rows * cols] = FillForCoord(hoverCoord.x, hoverCoord.y, _hoverColor.get());
+            fills[rows * cols + 1] = FillForCoord(hoverCoord.x, hoverCoord.y, _hoverColor.get());
         }
         this.setBackground(new Background(fills));
 
@@ -163,10 +178,21 @@ public class Grid extends StackPane {
         return (v < 0) ? 0 : (v > _rowCount.getValue()) ? _rowCount.getValue() - 1 : (int) v;
     }
 
-    public double colWidth() { return widthProperty().doubleValue() / _colCount.get();}
-    public double rowHeight() { return heightProperty().doubleValue() / _rowCount.get();}
-    public double wtRowHeight() { return heightProperty().doubleValue() / _rowCount.get() - _wallThickness.get();}
-    public double wtColWidth() { return widthProperty().doubleValue() / _colCount.get() - _wallThickness.get();}
+    public double colWidth() {
+        return widthProperty().doubleValue() / _colCount.get();
+    }
+
+    public double rowHeight() {
+        return heightProperty().doubleValue() / _rowCount.get();
+    }
+
+    public double wtRowHeight() {
+        return heightProperty().doubleValue() / _rowCount.get() - _wallThickness.get();
+    }
+
+    public double wtColWidth() {
+        return widthProperty().doubleValue() / _colCount.get() - _wallThickness.get();
+    }
 
     public int getAxisVal(double w, boolean isX) {
         return isX ? boundCol(w / colWidth()) : boundRow(w / rowHeight());
@@ -202,6 +228,10 @@ public class Grid extends StackPane {
         colorPattern.addAll(cp);
     }
 
+    public final void setBackgroundColor(Color c) {
+        _backgroundColor.set(c);
+    }
+
     public final void setBorderColor(Color c) {
         _borderColor.set(c);
     }
@@ -218,8 +248,13 @@ public class Grid extends StackPane {
         _gridLineThickness.set(glw);
     }
 
-    public final int getWallThickness() {return _wallThickness.get();}
-    public final void setWallThickness(int wt) {_wallThickness.set(wt);}
+    public final int getWallThickness() {
+        return _wallThickness.get();
+    }
+
+    public final void setWallThickness(int wt) {
+        _wallThickness.set(wt);
+    }
 
     public final void setHoverColor(Color c) {
         _hoverColor.set(c);
@@ -227,11 +262,11 @@ public class Grid extends StackPane {
 
     public final double cellWidth() {
         return getWidth() / getColCount();
-    }
+    } //dup of colWidth -- refactor
 
     public final double cellHeight() {
         return getHeight() / getRowCount();
-    }
+    } //dup of rowHeight -- refactor
 
     public final double cellLocalX(int i) {
         return i * cellWidth();
@@ -241,4 +276,20 @@ public class Grid extends StackPane {
         return j * cellHeight();
     }
 
+    public Rectangle2D getWallDim(Coord c, boolean isHorz, boolean isPlus) {
+        double x, y, w, h;
+        int wt = _wallThickness.get();
+        if (isHorz) {
+            y = cellLocalY(isPlus ? c.y + 1 : c.y) - (!isPlus && (c.y==0) ? 0 : wt);
+            x = cellLocalX(c.x);
+            w = cellWidth();
+            h = ((!isPlus && (c.y == 0)) || ((isPlus && (c.y == _rowCount.get() - 1)))) ? wt : wt * 2;
+        } else { //not horizontal
+            x = cellLocalX(isPlus ? c.x + 1 : c.x) - (!isPlus && (c.x==0) ? 0 : wt);
+            y = cellLocalY(c.y);
+            h = cellHeight();
+            w = ((!isPlus && (c.x == 0)) || ((isPlus && (c.x == _colCount.get() - 1)))) ? wt : wt * 2;
+        }
+        return new Rectangle2D(x, y, w, h);
+    }
 }

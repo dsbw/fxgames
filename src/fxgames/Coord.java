@@ -10,8 +10,18 @@ public class Coord {
     }
 
     public static Coord RandCoord(int aX, int aY) {
-        return(new Coord((int)(Math.random()*aX), (int)(Math.random()*aY)));
+        return (new Coord((int) (Math.random() * aX), (int) (Math.random() * aY)));
     }
+
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof Coord)) {
+            return false;
+        }
+        Coord c = (Coord) o;
+        return (c.x == x && c.y == y);
+    }
+
 
     @Override
     public String toString() {

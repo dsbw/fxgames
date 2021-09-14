@@ -1,6 +1,8 @@
 package fxgames.basicmaze;
 
 import fxgames.Coord;
+import fxgames.CoordPair;
+import javafx.application.Platform;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -8,20 +10,30 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static fxgames.Coord.RandCoord;
+import static java.lang.Thread.sleep;
 
 public class BasicMaze {
-    private final int width;
-    private final int height;
+    private int width;
+    private int height;
+    public int slots;
 
     public enum Direction {UP, RIGHT, DOWN, LEFT}
 
     private EnumSet<Direction>[][] maze;
 
     private transient List<Consumer<BasicMaze>> consumers = new ArrayList<>();
+    private transient List<Consumer<CoordPair>> updaters = new ArrayList<>();
 
     public BasicMaze(int w, int h) {
         width = w;
         height = h;
+    }
+
+    public void reset(int w, int h) {
+        width = w;
+        height = h;
+        maze = null;
+        alertConsumers();
     }
 
     public void addConsumer(Consumer<BasicMaze> l) {
@@ -37,6 +49,16 @@ public class BasicMaze {
         consumers.forEach(c -> c.accept(this));
     }
 
+    public void addUpdater(Consumer<CoordPair> cp) {
+        if (updaters == null) updaters = new ArrayList<>();
+        updaters.add(cp);
+    }
+
+    public void alertUpdaters(CoordPair cp) {
+        updaters.forEach(c -> c.accept(cp));
+    }
+
+
     public Coord dirToDelta(Direction dir) {
         int mx = 0;
         int my = 0;
@@ -50,7 +72,7 @@ public class BasicMaze {
     }
 
     public void generate() {
-        int slots = width * height;
+        slots = width * height;
         maze = (EnumSet<Direction>[][]) new EnumSet<?>[height][width];
         for (int j = 0; j < height; j++)
             for (int i = 0; i < width; i++)
@@ -89,15 +111,41 @@ public class BasicMaze {
 
             if (l.size() > 0) {
                 var d = l.get((new Random()).nextInt(l.size()));
-                c = connect.apply(c, d);
+                var c2 = connect.apply(c, d);
+                alertConsumers();
+                alertUpdaters(new CoordPair(c, c2));
+                try {
+                    sleep(0, 1);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                c = c2;
                 slots--;
             } else do {
                 c = RandCoord(width, height);
             } while (maze[c.y][c.x].isEmpty());
         } while (slots > 1);
+        System.out.println("DONE!");
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public EnumSet<Direction> get(int y, int x) {
+        if (maze == null) return EnumSet.noneOf(Direction.class);
+        return maze[y][x];
     }
 
     public void print() {
+        if (maze == null) {
+            System.out.println("-----no-maze-exists----");
+            return;
+        }
         for (int j = 0; j < height; j++) {
             for (int i = 0; i < width; i++) {
                 System.out.print((maze[j][i].contains(Direction.UP)) ? "·░·" : "·─·");
