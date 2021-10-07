@@ -1,10 +1,15 @@
 package fxgames;
 
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
+
+import static fxgames.basicmaze.BasicMaze.Direction.*;
+import static fxgames.basicmaze.BasicMaze.Direction.DOWN;
 
 public class Main extends Application {
 
@@ -28,6 +33,12 @@ public class Main extends Application {
         NodeController.me.activate("tiles-panel", Controller.me.central);
 
         primaryStage.show();
+        /*primaryStage.addEventHandler(KeyEvent.ANY, new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent keyEvent) {
+                System.out.println("App=>"+keyEvent.toString());
+            }
+        });*/
     }
 
     public void switchScreen(String name) {

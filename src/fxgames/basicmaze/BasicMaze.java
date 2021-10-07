@@ -2,8 +2,8 @@ package fxgames.basicmaze;
 
 import fxgames.Coord;
 import fxgames.CoordPair;
-import javafx.application.Platform;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -12,10 +12,13 @@ import java.util.function.Function;
 import static fxgames.Coord.RandCoord;
 import static java.lang.Thread.sleep;
 
-public class BasicMaze {
+public class BasicMaze implements Serializable {
     private int width;
     private int height;
     public int slots;
+    public Coord player;
+    public Coord entrance;
+    public Coord exit;
 
     public enum Direction {UP, RIGHT, DOWN, LEFT}
 
@@ -139,6 +142,22 @@ public class BasicMaze {
     public EnumSet<Direction> get(int y, int x) {
         if (maze == null) return EnumSet.noneOf(Direction.class);
         return maze[y][x];
+    }
+
+    public void assignCoords () {
+        entrance = Coord.RandCoord(width, height);
+        while(exit==null || exit.equals(entrance)) exit = Coord.RandCoord(width, height);
+        player = new Coord(entrance.x, entrance.y);
+    }
+
+    public boolean movePlayer(Direction d) {
+        if(get(player.y, player.x).contains(d)) {
+            var delta = dirToDelta(d);
+            player.x += delta.x;
+            player.y += delta.y;
+            alertConsumers();
+            return true;
+        } else return false;
     }
 
     public void print() {

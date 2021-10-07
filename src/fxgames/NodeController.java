@@ -9,9 +9,12 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 
-import javax.swing.*;
+import java.util.function.Consumer;
 import java.util.HashMap;
 import java.util.Random;
+
+import static fxgames.basicmaze.BasicMaze.Direction.*;
+import static fxgames.basicmaze.BasicMaze.Direction.DOWN;
 
 public class NodeController {
 
@@ -28,9 +31,13 @@ public class NodeController {
 
     private Node active;
     private final HashMap<String, Parent> nodeMap = new HashMap<>();
+    private final HashMap<String, Consumer<Void>> activateMap = new HashMap<>();
 
     protected void addNode(String name, Parent node) {
         nodeMap.put(name, node);
+    }
+    public void addOnActivate(String name, Consumer<Void> c) {
+        activateMap.put(name, c);
     }
 
     private final HashMap<Node, EventHandler<ActionEvent>> handlerMap = new HashMap<Node, EventHandler<ActionEvent>>();
@@ -57,6 +64,8 @@ public class NodeController {
             owner.getChildren().setAll(node);
             outro.setLayoutX(x);
             outro.setOpacity(o);
+            Consumer<Void> c = activateMap.get(name);
+            if (c!=null) c.accept(null);
         });
         if (owner instanceof javafx.scene.layout.AnchorPane) {
             AnchorPane.setTopAnchor(node, 0.0);

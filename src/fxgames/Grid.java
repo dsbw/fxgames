@@ -276,6 +276,10 @@ public class Grid extends StackPane {
         return j * cellHeight();
     }
 
+    public Rectangle2D getCellDim(Coord c) {
+        return new Rectangle2D(cellLocalX(c.x)+getWallThickness(), cellLocalY(c.y)+getWallThickness(), cellWidth()-getWallThickness()*2, cellHeight()-getWallThickness()*2);
+    }
+
     public Rectangle2D getWallDim(Coord c, boolean isHorz, boolean isPlus) {
         double x, y, w, h;
         int wt = _wallThickness.get();
