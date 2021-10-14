@@ -1,5 +1,6 @@
 package fxgames.basicmaze;
 
+import fxgames.Coord;
 import fxgames.Grid;
 import fxgames.Main;
 import fxgames.NodeController;
@@ -95,6 +96,7 @@ public class MazeController {
                         stage.showAndWait();
 
                         maze.assignCoords();
+                        mvm.setPlayerToken(mvm.playerTokenCalc(new Coord(maze.player.x, maze.player.y)));
                         mvm.draw();
                         grid.requestFocus();
                     }

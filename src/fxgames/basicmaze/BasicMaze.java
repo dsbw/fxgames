@@ -20,6 +20,9 @@ public class BasicMaze implements Serializable {
     public Coord entrance;
     public Coord exit;
 
+    public enum GameState {preGame, inGame, postGame}
+    public GameState gameState = GameState.preGame;
+
     public enum Direction {UP, RIGHT, DOWN, LEFT}
 
     private EnumSet<Direction>[][] maze;
@@ -36,6 +39,7 @@ public class BasicMaze implements Serializable {
         width = w;
         height = h;
         maze = null;
+        gameState = GameState.preGame;
         alertConsumers();
     }
 
@@ -129,6 +133,7 @@ public class BasicMaze implements Serializable {
             } while (maze[c.y][c.x].isEmpty());
         } while (slots > 1);
         System.out.println("DONE!");
+        gameState = GameState.inGame;
     }
 
     public int getHeight() {
@@ -146,15 +151,19 @@ public class BasicMaze implements Serializable {
 
     public void assignCoords () {
         entrance = Coord.RandCoord(width, height);
+        exit = null;
         while(exit==null || exit.equals(entrance)) exit = Coord.RandCoord(width, height);
         player = new Coord(entrance.x, entrance.y);
     }
 
     public boolean movePlayer(Direction d) {
+        if(gameState!= GameState.inGame) return false;
+
         if(get(player.y, player.x).contains(d)) {
             var delta = dirToDelta(d);
             player.x += delta.x;
             player.y += delta.y;
+            if(player.equals(exit)) gameState = GameState.postGame;
             alertConsumers();
             return true;
         } else return false;
