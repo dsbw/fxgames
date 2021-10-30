@@ -85,7 +85,7 @@ public class NodeController {
         int transitionType = rand.nextInt(2);
 
         switch (transitionType) {
-            case 0 -> {
+            case 0 -> { //refactor to a single timeline?
                 node.translateXProperty().set(owner.getWidth());
                 KeyValue kv = new KeyValue(node.translateXProperty(), 0, Interpolator.EASE_IN);
                 KeyFrame kf = new KeyFrame(Duration.seconds(0.25), kv);

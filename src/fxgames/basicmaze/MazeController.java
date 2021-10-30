@@ -70,6 +70,7 @@ public class MazeController {
                         height.editableProperty().set(true);
 
                         Button button = new Button("Generate!");
+                        button.setDefaultButton(true);
                         button.setOnAction(ev -> {
                             stage.close();
                             if (mvm!=null) maze.removeConsumer(mvm.drawFn);
@@ -94,10 +95,6 @@ public class MazeController {
                         stage.setTitle("Regenerate the maze?");
                         stage.setScene(scene);
                         stage.showAndWait();
-
-                        maze.assignCoords();
-                        mvm.setPlayerToken(mvm.playerTokenCalc(new Coord(maze.player.x, maze.player.y)));
-                        mvm.draw();
                         grid.requestFocus();
                     }
                     case "load" -> {

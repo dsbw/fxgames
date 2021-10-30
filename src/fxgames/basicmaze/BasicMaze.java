@@ -19,8 +19,10 @@ public class BasicMaze implements Serializable {
     public Coord player;
     public Coord entrance;
     public Coord exit;
+    public Coord minotaur; //add
 
-    public enum GameState {preGame, inGame, postGame}
+    public enum GameState {preGame, inGame, beenEaten, postGame}
+
     public GameState gameState = GameState.preGame;
 
     public enum Direction {UP, RIGHT, DOWN, LEFT}
@@ -41,6 +43,11 @@ public class BasicMaze implements Serializable {
         maze = null;
         gameState = GameState.preGame;
         alertConsumers();
+        slots = width * height;
+        maze = (EnumSet<Direction>[][]) new EnumSet<?>[height][width];
+        for (int j = 0; j < height; j++)
+            for (int i = 0; i < width; i++)
+                maze[j][i] = EnumSet.noneOf(Direction.class);
     }
 
     public void addConsumer(Consumer<BasicMaze> l) {
@@ -79,12 +86,6 @@ public class BasicMaze implements Serializable {
     }
 
     public void generate() {
-        slots = width * height;
-        maze = (EnumSet<Direction>[][]) new EnumSet<?>[height][width];
-        for (int j = 0; j < height; j++)
-            for (int i = 0; i < width; i++)
-                maze[j][i] = EnumSet.noneOf(Direction.class);
-
         BiFunction<Coord, Direction, EnumSet<Direction>> neighbor = (co, dir) -> {
             Coord delta = dirToDelta(dir);
             Coord dest = new Coord(co.x + delta.x, co.y + delta.y);
@@ -149,24 +150,90 @@ public class BasicMaze implements Serializable {
         return maze[y][x];
     }
 
-    public void assignCoords () {
+    public void assignCoords() {
+        System.out.printf("SLOTS:  %d", slots);
         entrance = Coord.RandCoord(width, height);
-        exit = null;
-        while(exit==null || exit.equals(entrance)) exit = Coord.RandCoord(width, height);
+        exit = Coord.RandCoord(width, height);
+        if ((int) (Math.random() * 2) == 0) {
+            entrance.y = 0;
+            exit.y = height - 1;
+        } else {
+            entrance.x = 0;
+            exit.x = width - 1;
+        }
         player = new Coord(entrance.x, entrance.y);
+        var playLen = findPath(player, exit).size();
+        var maxLen = 0;
+        var tries = 0;
+        minotaur = null;
+        Coord farthestPoint = null;
+        while (tries < 100) {
+            Coord newCoord;
+            do {newCoord = Coord.RandCoord(width, height);} while(newCoord.equals(player));
+
+            var newLen = findPath(newCoord, exit).size();
+            if(playLen < newLen) {
+                minotaur = newCoord;
+                break;
+            } else if(newLen > maxLen) {
+                farthestPoint = newCoord;
+                maxLen = newLen;
+            } else  tries ++;
+        }
+        if(minotaur==null) {
+            minotaur = player;
+            player = farthestPoint;
+        }
+        alertConsumers();
     }
 
     public boolean movePlayer(Direction d) {
-        if(gameState!= GameState.inGame) return false;
+        if (gameState != GameState.inGame) return false;
 
-        if(get(player.y, player.x).contains(d)) {
+        if (get(player.y, player.x).contains(d)) {
             var delta = dirToDelta(d);
             player.x += delta.x;
             player.y += delta.y;
-            if(player.equals(exit)) gameState = GameState.postGame;
+            if (player.equals(exit)) gameState = GameState.postGame;
+            else moveMinotaur();
             alertConsumers();
             return true;
         } else return false;
+    }
+
+    private void moveMinotaur() {
+        if (player.equals(minotaur)) gameState = GameState.beenEaten;
+        else {
+            var path = findPath(minotaur, player);
+            assert path != null;
+            minotaur = path.get(1);
+            if (player.equals(minotaur)) gameState = GameState.beenEaten;
+        }
+    }
+
+    private List<Coord> findPath(Coord source, Coord target) {
+        var trodden = new boolean[height][width];
+        return findPath(source, target, trodden);
+    }
+
+    private List<Coord> findPath(Coord source, Coord target, boolean[][] trodden) {
+        trodden[source.y][source.x] = true;
+        var l = new ArrayList<>(List.of(source));
+        if (source.equals(target))
+            return l;
+
+        var options = maze[source.y][source.x].stream().filter(direction -> {
+            var delta = dirToDelta(direction);
+            return !trodden[source.y + delta.y][source.x + delta.x];
+        }).map(direction -> {
+            var delta = dirToDelta(direction);
+            return findPath(new Coord(source.x + delta.x, source.y + delta.y), target, trodden);
+        }).filter(Objects::nonNull);
+        var s = options.findFirst();
+        if (s.isPresent()) {
+            l.addAll(s.get());
+            return l;
+        } else return null;
     }
 
     public void print() {

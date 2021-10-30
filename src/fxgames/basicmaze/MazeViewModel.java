@@ -35,8 +35,11 @@ public class MazeViewModel {
     private final Popup messageWin = new Popup();
     private final Label messageText = new Label("Victory is yours!");
     private final Circle playerToken;
-    private TranslateTransition playerTransition = new TranslateTransition();
-    private final LinkedList<Coord> transitionQueue = new LinkedList<Coord>();
+    private final Circle minotaurToken;
+
+    public record Transition(Circle token, Coord c) {}
+    private final LinkedList<Transition> transitionQueue = new LinkedList<>();
+    private Timeline timeline = new Timeline();
 
     public MazeViewModel(Grid g, BasicMaze m, MazeController c) {
         game = m;
@@ -45,6 +48,9 @@ public class MazeViewModel {
 
         playerToken = new Circle();
         playerToken.setFill(Color.web("0x000077", 1.0));
+        minotaurToken = new Circle();
+        minotaurToken.setFill(Color.web("0x964B00", 1.0));
+
 
         messageWin.getContent().add(messageText);
         messageText.setMinWidth(100);
@@ -53,13 +59,7 @@ public class MazeViewModel {
         g.setColCount(m.getWidth());
         g.setRowCount(m.getHeight());
 
-        InvalidationListener l = new InvalidationListener() {
-            @Override
-            public void invalidated(Observable observable) {
-                draw();
-            }
-        };
-
+        InvalidationListener l = observable -> resize();
         g.widthProperty().addListener(l);
         g.heightProperty().addListener(l);
 
@@ -68,11 +68,6 @@ public class MazeViewModel {
         board.addEventHandler(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent keyEvent) {
-                /*if(playerTransition.getStatus()==Animation.Status.RUNNING) {
-                    System.out.println("Too fast!");
-                    keyEvent.consume(); //N.B. we're consuming all keystrokes here, not just cursor keys.
-                    return;
-                };*/
                 var consume = true;
                 var oldx = game.player.x;
                 var oldy = game.player.y;
@@ -83,14 +78,20 @@ public class MazeViewModel {
                     case DOWN -> game.movePlayer(DOWN);
                     default -> consume = false;
                 }
-                if (oldx != game.player.x || oldy != game.player.y)
-                    addTransition(new Coord(game.player.x, game.player.y));
+                if (oldx != game.player.x || oldy != game.player.y) {
+                    addTransition(new Transition(playerToken, new Coord(game.player.x, game.player.y)));
+                    addTransition(new Transition(minotaurToken, new Coord(game.minotaur.x, game.minotaur.y)));
+                }
                 if (consume) {
                     keyEvent.consume();
 
                     if (game.gameState == BasicMaze.GameState.postGame) {
                         messageWin.show(Main.me.stage);
                         showMessage("You have escaped!");
+                    }
+                    else if (game.gameState == BasicMaze.GameState.beenEaten) {
+                        messageWin.show(Main.me.stage);
+                        showMessage("You have been eaten!");
                     }
                 }
             }
@@ -116,26 +117,30 @@ public class MazeViewModel {
 
     public void removeWall(CoordPair c) {
         Platform.runLater(() -> board.piecePane.getChildren().remove(walls.get(c)));
-        if (game.slots == 2)
+        if (game.slots == 2) {
             game.addConsumer(drawFn);
+            Platform.runLater(() -> {
+                game.assignCoords();
+                setToken(playerToken, tokenCalc(playerToken, new Coord(game.player.x, game.player.y)));
+                setToken(minotaurToken, tokenCalc(minotaurToken, new Coord(game.minotaur.x, game.minotaur.y)));
+            });
+        }
     }
 
-    public javafx.geometry.Point2D playerTokenCalc(Coord c) {
+    public javafx.geometry.Point2D tokenCalc(Circle token, Coord c) {
         var r = board.getCellDim(c);
         var newX = r.getMinX() + r.getWidth() / 2;
         var newY = r.getMinY() + r.getHeight() / 2;
-        playerToken.setRadius(Math.min(r.getWidth(), r.getHeight()) / 2);
-        return new javafx.geometry.Point2D((float)newX, (float)newY);
+        token.setRadius(Math.min(r.getWidth(), r.getHeight()) / 2);
+        return new javafx.geometry.Point2D((float) newX, (float) newY);
     }
 
-    public void setPlayerToken(javafx.geometry.Point2D n) {
-        playerToken.setTranslateX(0);
-        playerToken.setTranslateY(0);
-        playerToken.setCenterX(n.getX());
-        playerToken.setCenterY(n.getY());
+    public void setToken(Circle token, javafx.geometry.Point2D n) {
+        token.setCenterX(n.getX());
+        token.setCenterY(n.getY());
     }
 
-    public void addTransition(Coord t) {
+    public void addTransition(Transition t) {
         transitionQueue.add(t);
         playTransition();
     }
@@ -147,20 +152,24 @@ public class MazeViewModel {
     }
 
     public void playTransition() {
-        if (playerTransition.getStatus() != Animation.Status.RUNNING && transitionQueue.size() > 0) {
-            var n = playerTokenCalc(transitionQueue.get(0));
-            TranslateTransition translate = new TranslateTransition();
-            translate.setByX(n.getX() - playerToken.getCenterX());
-            translate.setByY(n.getY() - playerToken.getCenterY());
-            translate.setDuration(Duration.millis(60));
-            translate.setNode(playerToken);
-            translate.setOnFinished((e) -> {
-                setPlayerToken(n);
+        if (timeline.getStatus() != Animation.Status.RUNNING && transitionQueue.size() > 0) {
+            var t = transitionQueue.get(0).token;
+            var n = tokenCalc(t, transitionQueue.get(0).c);
+            Duration duration = Duration.millis(60);
+            timeline = new Timeline(
+                    new KeyFrame(duration, new KeyValue(t.centerXProperty(), n.getX(), Interpolator.EASE_IN)),
+                    new KeyFrame(duration, new KeyValue(t.centerYProperty(), n.getY(), Interpolator.EASE_IN)));
+            timeline.setOnFinished((e) -> {
                 removeTransition();
             });
-            playerTransition = translate;
-            translate.play();
+            timeline.play();
         }
+    }
+
+    public void resize() {
+        setToken(playerToken, tokenCalc(playerToken, new Coord(game.player.x, game.player.y)));
+        setToken(minotaurToken, tokenCalc(minotaurToken, new Coord(game.minotaur.x, game.minotaur.y)));
+        draw();
     }
 
     public void draw() {
@@ -200,6 +209,9 @@ public class MazeViewModel {
 
         if (game.player != null)
             board.piecePane.getChildren().add(playerToken);
+
+        if (game.minotaur != null)
+            board.piecePane.getChildren().add(minotaurToken);
     }
 
     private void showMessage(String text) {
