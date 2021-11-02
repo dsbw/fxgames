@@ -18,6 +18,11 @@
     -fx-background-color: #FFFF00;
 }
 
+.popup-message {
+    -fx-text-fill: black;
+    -fx-font-size: 18pt;
+    -fx-font-weight: bold;
+}
 
 #green {
     -fx-background-color: linear-gradient(#f0ff35, #a9ff00),

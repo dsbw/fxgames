@@ -7,7 +7,6 @@ import fxgames.Main;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
@@ -36,8 +35,11 @@ public class MazeViewModel {
     private final Label messageText = new Label("Victory is yours!");
     private final Circle playerToken;
     private final Circle minotaurToken;
+    public Timer minoTimer;
 
-    public record Transition(Circle token, Coord c) {}
+    public record Transition(Circle token, Coord c) {
+    }
+
     private final LinkedList<Transition> transitionQueue = new LinkedList<>();
     private Timeline timeline = new Timeline();
 
@@ -58,6 +60,7 @@ public class MazeViewModel {
 
         g.setColCount(m.getWidth());
         g.setRowCount(m.getHeight());
+        g.setHoverColor(null);
 
         InvalidationListener l = observable -> resize();
         g.widthProperty().addListener(l);
@@ -69,8 +72,6 @@ public class MazeViewModel {
             @Override
             public void handle(KeyEvent keyEvent) {
                 var consume = true;
-                var oldx = game.player.x;
-                var oldy = game.player.y;
                 switch (keyEvent.getCode()) {
                     case UP -> game.movePlayer(UP);
                     case RIGHT -> game.movePlayer(RIGHT);
@@ -78,24 +79,39 @@ public class MazeViewModel {
                     case DOWN -> game.movePlayer(DOWN);
                     default -> consume = false;
                 }
-                if (oldx != game.player.x || oldy != game.player.y) {
-                    addTransition(new Transition(playerToken, new Coord(game.player.x, game.player.y)));
-                    addTransition(new Transition(minotaurToken, new Coord(game.minotaur.x, game.minotaur.y)));
-                }
-                if (consume) {
-                    keyEvent.consume();
-
-                    if (game.gameState == BasicMaze.GameState.postGame) {
-                        messageWin.show(Main.me.stage);
-                        showMessage("You have escaped!");
+                addTransition(new Transition(playerToken, new Coord(game.player.x, game.player.y)));
+                if (game.minotaurDelay == 0) {
+                    if (consume) {
+                        game.moveMinotaur();
+                        addTransition(new Transition(minotaurToken, new Coord(game.minotaur.x, game.minotaur.y)));
                     }
-                    else if (game.gameState == BasicMaze.GameState.beenEaten) {
-                        messageWin.show(Main.me.stage);
-                        showMessage("You have been eaten!");
-                    }
+                } else minotaurGo();
+                if (game.gameState == BasicMaze.GameState.postGame) {
+                    messageWin.show(Main.me.stage);
+                    showMessage("You have escaped!");
+                } else if (game.gameState == BasicMaze.GameState.beenEaten) {
+                    messageWin.show(Main.me.stage);
+                    showMessage("You have been eaten!");
                 }
+                if (consume) keyEvent.consume();
             }
         });
+    }
+
+    private void minotaurGo() {
+        if (minoTimer == null) {
+            minoTimer = new Timer();
+            minoTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if (minoTimer!=null && game.gameState == BasicMaze.GameState.inGame) {
+                        game.moveMinotaur();
+                        addTransition(new Transition(minotaurToken, new Coord(game.minotaur.x, game.minotaur.y)));
+                    } else this.cancel();
+
+                }
+            }, 0L, game.minotaurDelay * 1000L);
+        }
     }
 
     public Rectangle drawWall(Rectangle2D r) {
@@ -216,7 +232,7 @@ public class MazeViewModel {
 
     private void showMessage(String text) {
         messageText.setText(text);
-        messageText.setStyle("-fx-text-fill: black; -fx-font-size: 18pt; -fx-font-weight: bold;");
+        messageText.getStyleClass().add("popup-message");
         messageWin.setOpacity(1.0);
         messageWin.setX(board.localToScreen(board.getBoundsInLocal()).getMinX() + board.cellLocalX(game.player.x));
         messageWin.setY(board.localToScreen(board.getBoundsInLocal()).getMinY() + board.cellLocalY(game.player.y));

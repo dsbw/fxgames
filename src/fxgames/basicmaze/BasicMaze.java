@@ -19,7 +19,8 @@ public class BasicMaze implements Serializable {
     public Coord player;
     public Coord entrance;
     public Coord exit;
-    public Coord minotaur; //add
+    public Coord minotaur;
+    public int minotaurDelay;
 
     public enum GameState {preGame, inGame, beenEaten, postGame}
 
@@ -35,6 +36,19 @@ public class BasicMaze implements Serializable {
     public BasicMaze(int w, int h) {
         width = w;
         height = h;
+    }
+
+    public void assign(BasicMaze source) {
+        width = source.width;
+        height = source.height;
+        slots = source.slots;
+        player = source.player;
+        entrance = source.entrance;
+        exit = source.exit;
+        minotaur = source.minotaur;
+        gameState = source.gameState;
+        minotaurDelay = source.minotaurDelay;
+        maze = source.maze;
     }
 
     public void reset(int w, int h) {
@@ -195,13 +209,12 @@ public class BasicMaze implements Serializable {
             player.x += delta.x;
             player.y += delta.y;
             if (player.equals(exit)) gameState = GameState.postGame;
-            else moveMinotaur();
             alertConsumers();
             return true;
         } else return false;
     }
 
-    private void moveMinotaur() {
+    public void moveMinotaur() {
         if (player.equals(minotaur)) gameState = GameState.beenEaten;
         else {
             var path = findPath(minotaur, player);

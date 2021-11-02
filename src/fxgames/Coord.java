@@ -1,6 +1,8 @@
 package fxgames;
 
-public class Coord {
+import java.io.Serializable;
+
+public class Coord implements Serializable {
     public int x;
     public int y;
 

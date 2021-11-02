@@ -6,7 +6,7 @@ My rationale is highly personal:
 
 1. I still like building native, desktop apps, and have actual use for same.
 2. JavaFX is a big beast, but it seems well-supported by a relatively broad community of users.
-3. But I'm likely to do any serious coding NOT in Clojure.
+3. But my main language is currently Clojure.
 4. Doing things like this in Java teach me JavaFX so that I can take the knowledge and go back to my real work in Clojure.
 5. Working in Java generally reminds me of how much more productive life is in Clojure.
 6. I mean, seriously. Java has massive ecosystems built-up to solve things that just never come up in Clojure.
@@ -35,7 +35,13 @@ In this first commit, you have the complete product of the first 15 "chapters", 
 
 Part II will have its own branch, and each commit will reflect a "chapter", as we build a more complex game, the rules of which we don't even know up front.
 
-## Part II: Dungeon Slippers
+## Part II: Maze
+
+Part II was supposed to be "Dungeon Slippers", but I quickly discovered I needed a grid component for that, so we spent a lot of time doing that.
+
+Then, to test it out and make it usable, we ended up coding a basic maze, and then allowing movement through the maze, then having a minotaur in the maze, which allowed us to explore recursive functions with streams in order to find a path.
+
+## Part III: Dungeon Slippers
 
 In part II, branch name "dunslip", we'll build a puzzle game that allows the player to move a token around a board in an attempt to reach the exit.
 

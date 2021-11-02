@@ -63,11 +63,14 @@ public class MazeController {
                         Label prompt = new Label("Set the dimensions:");
                         Label pwidth = new Label("Width:");
                         Label pheight = new Label("Height");
+                        Label pDelay = new Label("Minotaur delay (secs.)\n (0 for turn-based)");
 
                         Spinner<Integer> width = new Spinner<Integer>(2, 250, maze.getWidth());
                         width.editableProperty().set(true);
                         Spinner<Integer> height = new Spinner<Integer>(2, 250, maze.getHeight());
                         height.editableProperty().set(true);
+                        Spinner<Integer> delay = new Spinner<Integer>(0, 60, mvm == null? 0 : maze.minotaurDelay);
+                        delay.editableProperty().set(true);
 
                         Button button = new Button("Generate!");
                         button.setDefaultButton(true);
@@ -77,6 +80,8 @@ public class MazeController {
                             else mvm = new MazeViewModel(grid, maze, this);
                             maze.reset(width.getValue(), height.getValue());
                             regenerate();
+                            mvm.minoTimer = null;
+                            maze.minotaurDelay = delay.getValue();
                         });
 
                         Button button2 = new Button("Never mind");
@@ -89,9 +94,11 @@ public class MazeController {
                         layout.add(width, 2, 2);
                         layout.add(pheight, 1, 3);
                         layout.add(height, 2, 3);
-                        layout.add(button, 1,4);
-                        layout.add(button2, 2, 4);
-                        Scene scene = new Scene(layout, 250, 150);
+                        layout.add(pDelay, 1, 4);
+                        layout.add(delay, 2, 4);
+                        layout.add(button, 1,5);
+                        layout.add(button2, 2, 5);
+                        Scene scene = new Scene(layout, 300, 175);
                         stage.setTitle("Regenerate the maze?");
                         stage.setScene(scene);
                         stage.showAndWait();
@@ -103,10 +110,16 @@ public class MazeController {
                             try {
                                 FileInputStream fileIn = new FileInputStream(file);
                                 ObjectInputStream in = new ObjectInputStream(fileIn);
-                                maze = (BasicMaze) in.readObject();
+                                var loaded_maze = (BasicMaze) in.readObject();
                                 in.close();
                                 fileIn.close();
-                                mvm = new MazeViewModel(grid, maze, this);
+                                maze.assign(loaded_maze);
+                                if (mvm!=null) maze.removeConsumer(mvm.drawFn);
+                                else mvm = new MazeViewModel(grid, maze, this);
+                                maze.addConsumer(mvm.drawFn);
+                                grid.requestFocus();
+                                mvm.resize();
+                                mvm.minoTimer = null;
                             } catch (IOException | ClassNotFoundException i) {
                                 i.printStackTrace();
                             }
