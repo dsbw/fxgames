@@ -15,12 +15,15 @@ public class Coord implements Serializable {
         return (new Coord((int) (Math.random() * aX), (int) (Math.random() * aY)));
     }
 
+    public Coord add(Coord operand) {
+        return (new Coord(x+operand.x, y+operand.y));
+    }
+
     public boolean equals(Object o) {
         if (o == this) return true;
-        if (!(o instanceof Coord)) {
+        if (!(o instanceof Coord c)) {
             return false;
         }
-        Coord c = (Coord) o;
         return (c.x == x && c.y == y);
     }
 

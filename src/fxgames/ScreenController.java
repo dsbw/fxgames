@@ -5,8 +5,6 @@ import javafx.scene.layout.Pane;
 
 import java.util.HashMap;
 
-import static javafx.scene.input.MouseEvent.*;
-
 public class ScreenController {
     private final HashMap<String, Pane> screenMap = new HashMap<>();
     private final Scene main;

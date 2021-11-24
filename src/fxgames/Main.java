@@ -30,9 +30,15 @@ public class Main extends Application {
         screenController.addScreen("frame", FXMLLoader.load(getClass().getResource("../resources/main/frame.fxml")));
         switchScreen("frame");
 
+        System.out.println("******");
+        System.out.println(Controller.me.central);
+        System.out.println("******");
+
         NodeController.me.activate("tiles-panel", Controller.me.central);
 
         primaryStage.show();
+        Controller.me.adjustButtons();
+        System.out.println(getClass());
         /*primaryStage.addEventHandler(KeyEvent.ANY, new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent keyEvent) {

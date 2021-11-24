@@ -41,11 +41,13 @@ Part II was supposed to be "Dungeon Slippers", but I quickly discovered I needed
 
 Then, to test it out and make it usable, we ended up coding a basic maze, and then allowing movement through the maze, then having a minotaur in the maze, which allowed us to explore recursive functions with streams in order to find a path.
 
+I did forget to add in the (very basic) ds-main.fxml in resoureces/dunslip until 2.3. Whoops!
+
 ## Part III: Dungeon Slippers
 
-In part II, branch name "dunslip", we'll build a puzzle game that allows the player to move a token around a board in an attempt to reach the exit.
+In part III, branch name "realdun", we'll build a puzzle game that allows the player to move a token around a board in an attempt to reach the exit.
 
-I'll add code on an entry-by-entry basis so you can see exactly what changed. I did forget to add in the (very basic) ds-main.fxml in resoureces/dunslip until 2.3. Whoops!
+I'll add code on an entry-by-entry basis so you can see exactly what changed. 
 
 I'm doing this part of the "book" at [hashnode][2].
 

@@ -37,9 +37,7 @@ public class MazeViewModel {
     private final Circle minotaurToken;
     public Timer minoTimer;
 
-    public record Transition(Circle token, Coord c) {
-    }
-
+    public record Transition(Circle token, Coord c) {}
     private final LinkedList<Transition> transitionQueue = new LinkedList<>();
     private Timeline timeline = new Timeline();
 
@@ -52,7 +50,6 @@ public class MazeViewModel {
         playerToken.setFill(Color.web("0x000077", 1.0));
         minotaurToken = new Circle();
         minotaurToken.setFill(Color.web("0x964B00", 1.0));
-
 
         messageWin.getContent().add(messageText);
         messageText.setMinWidth(100);

@@ -5,6 +5,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.Button;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.util.Duration;
@@ -12,9 +13,6 @@ import javafx.util.Duration;
 import java.util.function.Consumer;
 import java.util.HashMap;
 import java.util.Random;
-
-import static fxgames.basicmaze.BasicMaze.Direction.*;
-import static fxgames.basicmaze.BasicMaze.Direction.DOWN;
 
 public class NodeController {
 
@@ -60,7 +58,7 @@ public class NodeController {
             var outro = owner.getChildren().get(0);
             double x = outro.getLayoutX();
             double o = outro.getOpacity();
-            owner.getChildren().removeAll();
+            //owner.getChildren().removeAll(); //Redundant with setAll, it seems
             owner.getChildren().setAll(node);
             outro.setLayoutX(x);
             outro.setOpacity(o);
@@ -83,6 +81,7 @@ public class NodeController {
         owner.getChildren().add(node);
 
         int transitionType = rand.nextInt(2);
+        transitionType = 2;
 
         switch (transitionType) {
             case 0 -> { //refactor to a single timeline?
@@ -134,6 +133,15 @@ public class NodeController {
                         trans2
                 );
                 parallelTransition.play();
+            }
+            case 2 -> {
+                ScaleTransition trans = new ScaleTransition(Duration.seconds(0.25), node);
+                trans.setFromX(0.1);
+                trans.setToX(1);
+                trans.setFromY(0.1);
+                trans.setToY(1);
+                trans.setOnFinished(e);
+                trans.play();
             }
         }
         active = node;

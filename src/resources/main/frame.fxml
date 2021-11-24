@@ -5,12 +5,12 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane id="main" fx:id="frame" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="128.0" prefWidth="354.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fxgames.Controller">
+<BorderPane id="main" fx:id="frame" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="128.0" prefWidth="354.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fxgames.Controller">
    <top>
-      <ButtonBar buttonOrder="U" prefHeight="75.0" prefWidth="354.0" BorderPane.alignment="CENTER">
+      <ButtonBar fx:id="buttonBar" buttonOrder="U" prefHeight="75.0" prefWidth="354.0" BorderPane.alignment="CENTER">
          <buttons>
             <Button onAction="#navigateBackwards" text="_Back" />
-            <Button id="new" onAction="#issueCommand" text="_New" wrapText="true" />
+            <Button id="new" onAction="#issueCommand" text="_New&#10;Game" wrapText="true" />
             <Button id="save" onAction="#issueCommand" text="_Save" />
             <Button id="load" onAction="#issueCommand" text="_Load" />
          </buttons>

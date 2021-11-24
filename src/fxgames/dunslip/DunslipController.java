@@ -1,53 +1,39 @@
 package fxgames.dunslip;
 
+import fxgames.Coord;
 import fxgames.Grid;
-import javafx.collections.ObservableList;
+import fxgames.NodeController;
 import javafx.fxml.FXML;
 import javafx.scene.paint.Color;
-
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 public class DunslipController {
 
     @FXML
-    Grid grid1;
+    Grid grid;
+    private Dunslip game;
+    private DsViewModel dvm;
 
     @FXML
     public void initialize() {
         System.out.println("DUNSLIP CONTROLLER ACTIVATED");
-    }
+        NodeController.me.addOnActivate("dungeon-slippers", unused -> grid.requestFocus());
 
-    @FXML
-    public void randomize() {
-        grid1.setWallThickness(grid1.getWallThickness()+1);
-        System.out.printf("Set wall thickness to %d\n", grid1.getWallThickness());
-/*        int x = (int) (Math.random()*40+2);
-        int y = (int) (Math.random()*40+2);
-        System.out.printf("Setting grid to %d,%d\n", x, y);
-        grid1.setColCount(x);
-        grid1.setRowCount(y);
+        grid.setColCount(8);
+        grid.setRowCount(8);
+        grid.setColorPattern(new ArrayList<Color>(Arrays.asList(Color.web("0x717171",1.0), Color.web("0x6F6F6F",1.0))));
+        grid.setGridLineThickness(0);
+        grid.setBorderThickness(0);
+        grid.setBackgroundColor(Color.web("0x7B7B7B"));
+        grid.setWallThickness(2);
 
-        ArrayList<Color> cp = new ArrayList<Color>();
+        game = new Dunslip(10, 10);
+        game.player = new Coord(4, 4);
+        game.exit = new Coord(0, 0);
 
-        System.out.print("Colors: ");
-        for(int i = 0; i < Math.random()*10; i++) {
-            Color c = new Color(Math.random(), Math.random(), Math.random(), 1);
-            System.out.print(" - "+c.toString());
-            cp.add(c);
-        }
-        System.out.printf(" => %d\n", cp.size() );
-        grid1.setColorPattern(cp);
-
-        int bw = (int)Math.round(Math.random()*20);
-        System.out.printf("Border width to =>%d\n", bw);
-        grid1.setBorderThickness(bw);
-        grid1.setBorderColor(new Color(Math.random(), Math.random(), Math.random(), 1));
-        int glw = (int)Math.round(Math.random()*3)*2;
-        System.out.printf("Grid line width to =>%d\n", glw);
-        grid1.setGridLineThickness(glw);
-        grid1.setGridLineColor(new Color(Math.random(), Math.random(), Math.random(), 1));
-        grid1.setHoverColor(new Color(Math.random(), Math.random(), Math.random(), 1));*/
+        dvm = new DsViewModel(grid, game, this);
+        dvm.draw();
+        grid.requestFocus();
     }
 }

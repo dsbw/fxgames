@@ -9,7 +9,7 @@
   <tabs>
     <Tab text="Untitled Tab 1">
          <content>
-            <Grid prefHeight="527.0" prefWidth="767.0" colCount="3" rowCount="3" fx:id="grid1" onMouseClicked="#randomize"/>
+            <Grid prefHeight="527.0" prefWidth="767.0" colCount="3" rowCount="3" fx:id="grid"/>
          </content>
     </Tab>
     <Tab text="Untitled Tab 2">
