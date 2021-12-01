@@ -27,6 +27,10 @@ public class Coord implements Serializable {
         return (c.x == x && c.y == y);
     }
 
+    @Override
+    public int hashCode() {
+        return x*y;
+    }
 
     @Override
     public String toString() {

@@ -5,14 +5,40 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import fxgames.Grid?>
 
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
 <TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="446.0" prefWidth="615.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fxgames.dunslip.DunslipController">
   <tabs>
-    <Tab text="Untitled Tab 1">
+    <Tab text="Designer">
          <content>
-            <Grid prefHeight="527.0" prefWidth="767.0" colCount="3" rowCount="3" fx:id="grid"/>
+             <GridPane>
+                 <children>
+                    <Grid prefHeight="527.0" prefWidth="767.0" colCount="3" rowCount="3" fx:id="grid" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                     <VBox  GridPane.columnIndex="1" GridPane.rowIndex="0">
+                         <Label>Components</Label>
+                         <ListView fx:id="complist"> <items>
+                             <FXCollections fx:factory="observableArrayList">
+                                 <String fx:value="Wall (left)" />
+                                 <String fx:value="Wall (right)" />
+                                 <String fx:value="Wall (up)" />
+                                 <String fx:value="Wall (down)" />
+                             </FXCollections>
+                         </items></ListView>
+                     </VBox>
+                 </children>
+                 <columnConstraints>
+                     <ColumnConstraints hgrow="SOMETIMES"  percentWidth="80.0"/>
+                     <ColumnConstraints hgrow="SOMETIMES"  percentWidth="20.0"/>
+                 </columnConstraints>
+             </GridPane>
          </content>
     </Tab>
-    <Tab text="Untitled Tab 2">
+    <Tab text="Player">
       <content>
         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
       </content>

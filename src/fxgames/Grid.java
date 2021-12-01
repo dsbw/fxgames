@@ -6,6 +6,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -60,7 +61,11 @@ public class Grid extends StackPane {
         this.setOnMouseEntered(event -> setHoverCoord(event.getX(), event.getY()));
         this.setOnMouseExited(event -> clearHoverCoord());
         this.setOnMouseMoved(event -> setHoverCoord(event.getX(), event.getY()));
-
+        this.setOnMouseClicked(event -> {
+            setHoverCoord(event.getX(), event.getY());
+            if (onGridMouseClicked != null)
+                onGridMouseClicked.handle(event, hoverCoord.x, hoverCoord.y);
+        });
         this.setOnDragEntered(event -> setHoverCoord(event.getX(), event.getY()));
         this.setOnDragOver(event -> {
             setHoverCoord(event.getX(), event.getY());
@@ -97,6 +102,10 @@ public class Grid extends StackPane {
     public void setOnGridDragDrop(GridDragDrop e) {
         this.onGridDragDrop = e;
     }
+
+    public GridMouseEvent onGridMouseClicked;
+    public void setOnGridMouseClicked(GridMouseEvent e) {this.onGridMouseClicked = e;}
+
 
     public void setHoverCoord(double x, double y) {
         if (hoverCoord == null) {
@@ -277,19 +286,19 @@ public class Grid extends StackPane {
     }
 
     public Rectangle2D getCellDim(Coord c) {
-        return new Rectangle2D(cellLocalX(c.x)+getWallThickness(), cellLocalY(c.y)+getWallThickness(), cellWidth()-getWallThickness()*2, cellHeight()-getWallThickness()*2);
+        return new Rectangle2D(cellLocalX(c.x) + getWallThickness(), cellLocalY(c.y) + getWallThickness(), cellWidth() - getWallThickness() * 2, cellHeight() - getWallThickness() * 2);
     }
 
     public Rectangle2D getWallDim(Coord c, boolean isHorz, boolean isPlus) {
         double x, y, w, h;
         int wt = _wallThickness.get();
         if (isHorz) {
-            y = cellLocalY(isPlus ? c.y + 1 : c.y) - (!isPlus && (c.y==0) ? 0 : wt);
+            y = cellLocalY(isPlus ? c.y + 1 : c.y) - (!isPlus && (c.y == 0) ? 0 : wt);
             x = cellLocalX(c.x);
             w = cellWidth();
             h = ((!isPlus && (c.y == 0)) || ((isPlus && (c.y == _rowCount.get() - 1)))) ? wt : wt * 2;
         } else { //not horizontal
-            x = cellLocalX(isPlus ? c.x + 1 : c.x) - (!isPlus && (c.x==0) ? 0 : wt);
+            x = cellLocalX(isPlus ? c.x + 1 : c.x) - (!isPlus && (c.x == 0) ? 0 : wt);
             y = cellLocalY(c.y);
             h = cellHeight();
             w = ((!isPlus && (c.x == 0)) || ((isPlus && (c.x == _colCount.get() - 1)))) ? wt : wt * 2;
