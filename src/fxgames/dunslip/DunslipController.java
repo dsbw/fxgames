@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import static fxgames.dunslip.Dunslip.Direction.*;
+import static fxgames.dunslip.Dunslip.GamePiece.treasure;
 import static fxgames.dunslip.Dunslip.GamePiece.wall;
 
 public class DunslipController {
@@ -37,8 +38,9 @@ public class DunslipController {
         game = new Dunslip(10, 10);
         game.player = new Coord(4, 4);
         game.exit = new Coord(2, 2);
-        game.add(2,2,  new Thing(wall, DOWN));
-        game.add(2, 0, new Thing(wall, LEFT));
+        game.add(2,2,  new Thing(wall, DOWN, false, false));
+        game.add(2, 0, new Thing(wall, LEFT, false, false));
+        game.add(2, 0, new Thing(treasure, null, true, true));
 
         dvm = new DsViewModel(grid, game, this);
         dvm.draw();
@@ -46,10 +48,11 @@ public class DunslipController {
 
         complist.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
             switch(newValue) {
-                case "Wall (left)" -> dvm.thing = new Thing(wall, LEFT);
-                case "Wall (right)" -> dvm.thing = new Thing(wall, RIGHT);
-                case "Wall (up)" -> dvm.thing = new Thing(wall, UP);
-                case "Wall (down)" -> dvm.thing = new Thing(wall, DOWN);
+                case "Wall (left)" -> dvm.thing = Dunslip.Wall(LEFT);
+                case "Wall (right)" -> dvm.thing = Dunslip.Wall(RIGHT);
+                case "Wall (up)" -> dvm.thing = Dunslip.Wall(UP);
+                case "Wall (down)" -> dvm.thing = Dunslip.Wall(DOWN);
+                case "Treasure" -> dvm.thing = new Thing(treasure, null, true, true);
                 default -> dvm.thing = null;
             }
         });

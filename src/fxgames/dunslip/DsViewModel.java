@@ -16,11 +16,13 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Popup;
 import javafx.util.Duration;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.LinkedList;
 
 import static fxgames.dunslip.Dunslip.*;
 import static fxgames.dunslip.Dunslip.Direction.*;
+import static fxgames.dunslip.Dunslip.GamePiece.wall;
 
 public class DsViewModel {
 
@@ -78,25 +80,29 @@ public class DsViewModel {
         board.addEventHandler(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent keyEvent) {
-                var consume = true;
-                switch (keyEvent.getCode()) {
-                    case UP -> game.movePlayer(UP);
-                    case RIGHT -> game.movePlayer(RIGHT);
-                    case LEFT -> game.movePlayer(Direction.LEFT);
-                    case DOWN -> game.movePlayer(DOWN);
-                    default -> consume = false;
-                }
-
-                addTransition(new DsViewModel.Transition(playerToken, new Coord(game.player.x, game.player.y)));
-                if (game.gameState == GameState.postGame) {
-                    messageWin.show(Main.me.stage);
-                    showMessage("You have escaped!");
-                } else if (game.gameState == GameState.beenEaten) {
-                    messageWin.show(Main.me.stage);
-                    showMessage("You have been eaten!");
-                }
-
-                if (consume) keyEvent.consume();
+                var oh = game.history.size();
+                var moved =
+                        switch (keyEvent.getCode()) {
+                            case UP -> game.movePlayer(UP);
+                            case RIGHT -> game.movePlayer(RIGHT);
+                            case LEFT -> game.movePlayer(LEFT);
+                            case DOWN -> game.movePlayer(DOWN);
+                            case R -> game.rewind();
+                            case F -> game.fforward();
+                            default -> null;
+                        };
+                var valid = oh != game.history.size();
+                if (Boolean.TRUE.equals(valid)) {
+                    addTransition(new DsViewModel.Transition(playerToken, new Coord(game.player.x, game.player.y)));
+                    if (game.gameState == GameState.postGame) {
+                        messageWin.show(Main.me.stage);
+                        showMessage("You have escaped!");
+                    } else if (game.gameState == GameState.beenEaten) {
+                        messageWin.show(Main.me.stage);
+                        showMessage("You have been eaten!");
+                    }
+                } else if (Boolean.FALSE.equals(valid)) Toolkit.getDefaultToolkit().beep();
+                keyEvent.consume();
             }
         });
     }
@@ -122,6 +128,7 @@ public class DsViewModel {
                     new KeyFrame(duration, new KeyValue(t.centerYProperty(), n.getY(), Interpolator.EASE_IN)));
             timeline.setOnFinished((e) -> {
                 removeTransition();
+                if (transitionQueue.size() == 0) draw();
             });
             timeline.play();
         }
@@ -152,8 +159,16 @@ public class DsViewModel {
         board.piecePane.getChildren().clear();
 
         for (var entry : game.things.entrySet()) {
-            for(var thing : entry.getValue()) {
-                addWall(entry.getKey().x, entry.getKey().y, thing.blocks());
+            for (var thing : entry.getValue()) {
+                switch (thing.id()) {
+                    case wall -> addWall(entry.getKey().x, entry.getKey().y, thing.blocks());
+                    case treasure -> {
+                        var t = new Circle();
+                        setToken(t, tokenCalc(t, new Coord(entry.getKey().x, entry.getKey().y)));
+                        t.setFill(Color.GOLD);
+                        board.piecePane.getChildren().add(t);
+                    }
+                }
             }
         }
 
@@ -162,6 +177,7 @@ public class DsViewModel {
         if (game.exit != null)
             board.piecePane.getChildren().add(exitToken);
 
+        board.requestFocus();
     }
 
     public javafx.geometry.Point2D tokenCalc(Circle token, Coord c) {

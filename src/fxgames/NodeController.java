@@ -81,7 +81,6 @@ public class NodeController {
         owner.getChildren().add(node);
 
         int transitionType = rand.nextInt(2);
-        transitionType = 2;
 
         switch (transitionType) {
             case 0 -> { //refactor to a single timeline?

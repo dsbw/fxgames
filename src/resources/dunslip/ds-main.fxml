@@ -27,6 +27,8 @@
                                  <String fx:value="Wall (right)" />
                                  <String fx:value="Wall (up)" />
                                  <String fx:value="Wall (down)" />
+                                 <String fx:value="Treasure" />
+                                 <String fx:value="Breakable Wall" />
                              </FXCollections>
                          </items></ListView>
                      </VBox>
