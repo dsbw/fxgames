@@ -11,8 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import static fxgames.dunslip.Dunslip.Direction.*;
-import static fxgames.dunslip.Dunslip.GamePiece.treasure;
-import static fxgames.dunslip.Dunslip.GamePiece.wall;
+import static fxgames.dunslip.Dunslip.GamePiece.*;
 
 public class DunslipController {
 
@@ -36,11 +35,12 @@ public class DunslipController {
         grid.setWallThickness(2);
 
         game = new Dunslip(10, 10);
-        game.player = new Coord(4, 4);
+        game.add(new Thing(PLAYER, 4, 4, null, true, false, false));
         game.exit = new Coord(2, 2);
-        game.add(2,2,  new Thing(wall, DOWN, false, false));
-        game.add(2, 0, new Thing(wall, LEFT, false, false));
-        game.add(2, 0, new Thing(treasure, null, true, true));
+        game.add(Dunslip.Wall(8, 8, RIGHT));
+        game.add(Dunslip.Wall(1, 0, LEFT));
+        game.add(new Thing(TREASURE, 4, 9, null, true, true, false));
+        game.add(new Thing(GOBLIN, 8, 7, null, true, true, true));
 
         dvm = new DsViewModel(grid, game, this);
         dvm.draw();
@@ -48,11 +48,11 @@ public class DunslipController {
 
         complist.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
             switch(newValue) {
-                case "Wall (left)" -> dvm.thing = Dunslip.Wall(LEFT);
-                case "Wall (right)" -> dvm.thing = Dunslip.Wall(RIGHT);
-                case "Wall (up)" -> dvm.thing = Dunslip.Wall(UP);
-                case "Wall (down)" -> dvm.thing = Dunslip.Wall(DOWN);
-                case "Treasure" -> dvm.thing = new Thing(treasure, null, true, true);
+                case "Wall (left)" -> dvm.thing = Dunslip.Wall(-1, -1, LEFT);
+                case "Wall (right)" -> dvm.thing = Dunslip.Wall(-1, -1, RIGHT);
+                case "Wall (up)" -> dvm.thing = Dunslip.Wall(-1, -1, UP);
+                case "Wall (down)" -> dvm.thing = Dunslip.Wall(-1, -1, DOWN);
+                case "Treasure" -> dvm.thing = new Thing(TREASURE, -1, -1, null, true, true, false);
                 default -> dvm.thing = null;
             }
         });

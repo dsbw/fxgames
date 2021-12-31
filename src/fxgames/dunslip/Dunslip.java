@@ -6,20 +6,20 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static fxgames.dunslip.Dunslip.Direction.*;
+import static fxgames.dunslip.Dunslip.GamePiece.PLAYER;
 import static fxgames.dunslip.Dunslip.GameState.postGame;
 
 public class Dunslip {
     private int width;
     private int height;
-    private int history_position = 0;
-    Coord player;
+    public int history_position = 0;
     Coord exit;
 
     List<Dunslip> history = new ArrayList<>();
 
     public enum GameState {design, preGame, inGame, beenEaten, postGame}
 
-    public enum GamePiece {wall, treasure}
+    public enum GamePiece {PLAYER, WALL, TREASURE, GOBLIN}
 
     GameState gameState;
     private transient List<Consumer<Dunslip>> consumers = new ArrayList<>();
@@ -28,10 +28,20 @@ public class Dunslip {
 
     public record Thing(
             GamePiece id,
+            int x,
+            int y,
             Direction blocks,
-            Boolean occupies,
-            Boolean removeOnTouch
+            boolean occupies,
+            boolean removeOnTouch,
+            boolean flees
     ) {
+        public static Thing copy(Thing t) {
+            return new Thing(t.id, t.x, t.y, t.blocks, t.occupies, t.removeOnTouch, t.flees);
+        }
+
+        public static Thing move(Thing t, int x, int y) {
+            return new Thing(t.id, x, y, t.blocks, t.occupies, t.removeOnTouch, t.flees);
+        }
     }
 
     public record Effect(
@@ -44,10 +54,10 @@ public class Dunslip {
 
     public ArrayList<Effect> effectList;
 
-    public HashMap<Coord, List<Thing>> things = new HashMap<>();
+    public List<Thing> things = new ArrayList<>();
 
-    public static Thing Wall(Direction dir) {
-        return new Thing(GamePiece.wall, dir, false, false);
+    public static Thing Wall(int x, int y, Direction dir) {
+        return new Thing(GamePiece.WALL, x, y, dir, false, false, false);
     }
 
     public Dunslip(int w, int h) {
@@ -59,20 +69,9 @@ public class Dunslip {
     public Dunslip(Dunslip d) {
         this.width = d.width;
         this.height = d.height;
-        this.player = new Coord(d.player.x, d.player.y);
         this.exit = new Coord(d.exit.x, d.exit.y);
         this.gameState = d.gameState;
-        for (Map.Entry<Coord, List<Thing>> entry : d.things.entrySet()) {
-            for (Thing t : entry.getValue()) {
-                this.add(entry.getKey().x, entry.getKey().y, new Thing(t.id, t.blocks, t.occupies, t.removeOnTouch));
-            }
-        }
-        if (d.effectList != null) {
-            this.effectList = new ArrayList<Effect>();
-            for (Effect e : d.effectList) {
-                this.effectList.add(new Effect(e.effectLoc, e.effect, e.causeLoc, e.cause));
-            }
-        }
+        for (Thing t : d.things)  this.add(Thing.copy(t));
         d.consumers = this.consumers;
     }
 
@@ -80,21 +79,10 @@ public class Dunslip {
         var d = history.get(hp);
         this.width = d.width;
         this.height = d.height;
-        this.player = new Coord(d.player.x, d.player.y);
         this.exit = new Coord(d.exit.x, d.exit.y);
         this.gameState = d.gameState;
-        for (Map.Entry<Coord, List<Thing>> entry : d.things.entrySet()) {
-            for (Thing t : entry.getValue()) {
-                this.add(entry.getKey().x, entry.getKey().y, new Thing(t.id, t.blocks, t.occupies, t.removeOnTouch));
-            }
-        }
-        if (d.effectList != null) {
-            this.effectList = new ArrayList<Effect>();
-            for (Effect e : d.effectList) {
-                this.effectList.add(new Effect(e.effectLoc, e.effect, e.causeLoc, e.cause));
-            }
-        }
-        processEffects();
+        things.clear();
+        for (Thing t : d.things) this.add(Thing.copy(t));
         this.consumers = d.consumers;
     }
 
@@ -114,20 +102,21 @@ public class Dunslip {
         return true;
     }
 
-    public boolean add(int x, int y, Thing thing) {
-        var c = new Coord(x, y);
-        things.computeIfAbsent(c, k -> new ArrayList<>());
-        var l = things.get(new Coord(x, y));
-        if (l.contains(thing)) return false;
-        l.add(thing);
+    public boolean add(Thing thing) {
+        if (things.contains(thing)) return false;
+        things.add(thing);
         return true;
     }
 
-    public boolean remove(int x, int y, Thing thing) {
-        var c = new Coord(x, y);
-        var l = things.get(c);
-        if (l == null) return false;
-        return (l.remove(thing));
+    public Thing player() {
+        return things.stream().filter(thing -> thing.id == PLAYER).findFirst().get();
+    }
+
+    public boolean remove(Thing thing) {
+        var l = things.indexOf(thing);
+        if (l == -1) return false;
+        things.remove(l);
+        return true;
     }
 
     public Coord dirToDelta(Direction dir) {
@@ -140,6 +129,13 @@ public class Dunslip {
             case LEFT -> mx = -1;
         }
         return new Coord(mx, my);
+    }
+
+    public Direction deltaToDir(int x, int y) {
+        if (x == 1) return RIGHT;
+        if (x == -1) return LEFT;
+        if (y == 1) return DOWN;
+        return UP;
     }
 
     public void addConsumer(Consumer<Dunslip> l) {
@@ -172,41 +168,46 @@ public class Dunslip {
         };
     }
 
-    public boolean movePlayerOneSpace(Direction d) {
-        Coord c = player.add(dirToDelta(d));
-        if (c.x < 0 || c.y < 0 || c.x >= width || c.y >= height) return false;
-        for (var entry : things.entrySet()) {
-            if (entry.getKey().equals(player) &&
-                    entry.getValue().stream().anyMatch(thing -> thing.blocks == d)) return false;
-            if (entry.getKey().equals(c) &&
-                    entry.getValue().stream().anyMatch(thing -> thing.blocks == directionComplement(d))) return false;
-            entry.getValue().stream()
-                    .filter(thing -> entry.getKey().equals(c) && thing.removeOnTouch)
-                    .forEach(thing -> {
-                        effectList.add(new Effect(c, thing, player, null));
-                    });
-            if (entry.getKey().equals(c) &&
-                    entry.getValue().stream().anyMatch(thing -> thing.occupies)) return false;
+    public boolean moveThingOneSpace(Thing it, Direction d) {
+        Coord dest = new Coord(it.x, it.y).add(dirToDelta(d));
+        if (dest.x < 0 || dest.y < 0 || dest.x >= width || dest.y >= height) return false;
+        for(int i = things.size()-1; i >= 0; i--) {
+            var thing = things.get(i);
+            if (thing == it) continue;
+            var thingLoc = new Coord(thing.x, thing.y);
+            if ((it.x == thingLoc.x) && (it.y == thingLoc.y) && (thing.blocks == d)) return false;
+            if (dest.equals(thingLoc)) {
+                if (thing.removeOnTouch) effectList.add(new Effect(dest, thing, new Coord(it.x, it.y), null));
+                if (thing.occupies || (thing.blocks == directionComplement(d))) return false;
+            }
         }
         return true;
+    }
+
+    private boolean moveThing(Thing thing, Direction d) {
+        var moved = false;
+        while (moveThingOneSpace(thing, d)) {
+            var delta = dirToDelta(d);
+            var t = Thing.move(thing, thing.x + delta.x, thing.y + delta.y);
+            remove(thing);
+            add(t);
+            thing = t;
+            moved = true;
+            if (thing.x == exit.x && thing.y == exit.y) {
+                gameState = postGame;
+                break;
+            }
+        }
+        return moved;
     }
 
     public boolean movePlayer(Direction d) {
         if (gameState != GameState.inGame) return false;
         if (history.size() == 0) recordState();
-        var moved = false;
         effectList = new ArrayList<>();
-        while (movePlayerOneSpace(d)) {
-            var delta = dirToDelta(d);
-            player.x += delta.x;
-            player.y += delta.y;
-            moved = true;
-            if (player.equals(exit)) {
-                gameState = postGame;
-                break;
-            }
-        }
+        var moved = moveThing(player(), d);
         processEffects();
+        afterEffects();
         recordState();
         return moved;
     }
@@ -214,15 +215,44 @@ public class Dunslip {
     private void recordState() {
         if (history.size() > 0) history = new ArrayList<>(history.subList(0, history_position + 1));
         history.add(new Dunslip(this));
-        history_position = history.size() - 1;;
+        history_position = history.size() - 1;
+        ;
     }
 
     public void processEffects() {
         effectList.forEach(e -> {
             if (e.effect.removeOnTouch)
-                remove(e.effectLoc.x, e.effectLoc.y, e.effect);
+                remove(e.effect);
         });
     }
 
+    private void afterEffects() {
+        for(int i = things.size()-1; i >= 0; i--) {
+            var thing = things.get(i);
+            var dx = thing.x - player().x;
+            var dy = thing.y - player().y;
+            if (Math.abs(dx) + Math.abs(dy) == 1) {
+                if (thing.flees) flee(thing, deltaToDir(dx, dy));
+            }
+        }
+    }
 
+    private void flee(Thing thing, Direction dir) {
+        moveThing(thing, dir);
+    }
+
+    @Override
+    public String toString() {
+        return "Dunslip{" +
+                "width=" + width +
+                ", height=" + height +
+                ", history_position=" + history_position +
+                ", exit=" + exit +
+                ", \nhistory=" + history +
+                ", \ngameState=" + gameState +
+                ", consumers=" + consumers +
+                ", effectList=" + effectList +
+                ", things=" + things +
+                '}';
+    }
 }

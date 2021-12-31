@@ -22,7 +22,6 @@ import java.util.LinkedList;
 
 import static fxgames.dunslip.Dunslip.*;
 import static fxgames.dunslip.Dunslip.Direction.*;
-import static fxgames.dunslip.Dunslip.GamePiece.wall;
 
 public class DsViewModel {
 
@@ -70,8 +69,8 @@ public class DsViewModel {
         board.setOnGridMouseClicked((var1, x, y) -> {
                     System.out.println(thing);
                     if (thing != null) {
-                        if (!game.remove(x, y, thing))
-                            game.add(x, y, thing);
+                        if (!game.remove(thing))
+                            game.add(thing);
                         draw();
                     }
                 }
@@ -81,6 +80,7 @@ public class DsViewModel {
             @Override
             public void handle(KeyEvent keyEvent) {
                 var oh = game.history.size();
+                var op = game.history_position;
                 var moved =
                         switch (keyEvent.getCode()) {
                             case UP -> game.movePlayer(UP);
@@ -91,9 +91,9 @@ public class DsViewModel {
                             case F -> game.fforward();
                             default -> null;
                         };
-                var valid = oh != game.history.size();
+                var valid = (oh != game.history.size()) || (op != game.history_position) ;
                 if (Boolean.TRUE.equals(valid)) {
-                    addTransition(new DsViewModel.Transition(playerToken, new Coord(game.player.x, game.player.y)));
+                    addTransition(new DsViewModel.Transition(playerToken, new Coord(game.player().x(), game.player().y())));
                     if (game.gameState == GameState.postGame) {
                         messageWin.show(Main.me.stage);
                         showMessage("You have escaped!");
@@ -151,6 +151,13 @@ public class DsViewModel {
                         j + (d == DOWN ? +1 : d == UP ? -1 : 0))), r);
     }
 
+    public void addPiece(Coord loc, Color c) {
+        var t = new Circle();
+        setToken(t, tokenCalc(t, new Coord(loc.x, loc.y)));
+        t.setFill(c);
+        board.piecePane.getChildren().add(t);
+    }
+
     public void draw() {
         walls = new HashMap<>();
         if (board.getHeight() == 0 || board.getWidth() == 0) return;
@@ -158,21 +165,15 @@ public class DsViewModel {
         board.setColCount(game.getWidth());
         board.piecePane.getChildren().clear();
 
-        for (var entry : game.things.entrySet()) {
-            for (var thing : entry.getValue()) {
-                switch (thing.id()) {
-                    case wall -> addWall(entry.getKey().x, entry.getKey().y, thing.blocks());
-                    case treasure -> {
-                        var t = new Circle();
-                        setToken(t, tokenCalc(t, new Coord(entry.getKey().x, entry.getKey().y)));
-                        t.setFill(Color.GOLD);
-                        board.piecePane.getChildren().add(t);
-                    }
-                }
+        for (var thing : game.things) {
+            switch (thing.id()) {
+                case WALL -> addWall(thing.x(), thing.y(), thing.blocks());
+                case TREASURE -> addPiece(new Coord(thing.x(), thing.y()), Color.GOLD);
+                case GOBLIN -> addPiece(new Coord(thing.x(), thing.y()), Color.WHITE);
             }
         }
 
-        if (game.player != null)
+        if (game.player() != null)
             board.piecePane.getChildren().add(playerToken);
         if (game.exit != null)
             board.piecePane.getChildren().add(exitToken);
@@ -191,7 +192,7 @@ public class DsViewModel {
     public void resize() {
         if (board.getHeight() == 0 || board.getWidth() == 0) return;
         setToken(exitToken, tokenCalc(exitToken, new Coord(game.exit.x, game.exit.y)));
-        setToken(playerToken, tokenCalc(playerToken, new Coord(game.player.x, game.player.y)));
+        setToken(playerToken, tokenCalc(playerToken, new Coord(game.player().x(), game.player().y())));
         draw();
     }
 
@@ -204,8 +205,8 @@ public class DsViewModel {
         messageText.setText(text);
         messageText.getStyleClass().add("popup-message");
         messageWin.setOpacity(1.0);
-        messageWin.setX(board.localToScreen(board.getBoundsInLocal()).getMinX() + board.cellLocalX(game.player.x));
-        messageWin.setY(board.localToScreen(board.getBoundsInLocal()).getMinY() + board.cellLocalY(game.player.y));
+        messageWin.setX(board.localToScreen(board.getBoundsInLocal()).getMinX() + board.cellLocalX(game.player().x()));
+        messageWin.setY(board.localToScreen(board.getBoundsInLocal()).getMinY() + board.cellLocalY(game.player().y()));
         messageWin.show(Main.me.stage);
         Timeline tl = new Timeline();
         KeyValue kv = new KeyValue(messageWin.opacityProperty(), 0.0);
