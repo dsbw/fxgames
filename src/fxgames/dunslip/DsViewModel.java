@@ -28,8 +28,8 @@ public class DsViewModel {
     private final Dunslip game;
     private final Grid board;
     private final DunslipController cont;
-    private final Circle playerToken;
     private final Circle exitToken;
+    private final HashMap<Integer, Circle> tokens = new HashMap<>();
 
     public record Transition(Circle token, Coord c) {
     }
@@ -47,8 +47,6 @@ public class DsViewModel {
         board = g;
         cont = c;
 
-        playerToken = new Circle();
-        playerToken.setFill(Color.web("0x000077", 1.0));
         exitToken = new Circle();
         exitToken.setFill(Color.web("0xFF0077", 1.0));
 
@@ -69,8 +67,9 @@ public class DsViewModel {
         board.setOnGridMouseClicked((var1, x, y) -> {
                     System.out.println(thing);
                     if (thing != null) {
-                        if (!game.remove(thing))
-                            game.add(thing);
+                        var t = Thing.move(thing, x, y);
+                        if (!game.remove(t))
+                            game.add(Thing.move(t, x, y));
                         draw();
                     }
                 }
@@ -81,6 +80,7 @@ public class DsViewModel {
             public void handle(KeyEvent keyEvent) {
                 var oh = game.history.size();
                 var op = game.history_position;
+                var ot = game.TURN;
                 var moved =
                         switch (keyEvent.getCode()) {
                             case UP -> game.movePlayer(UP);
@@ -91,9 +91,14 @@ public class DsViewModel {
                             case F -> game.fforward();
                             default -> null;
                         };
-                var valid = (oh != game.history.size()) || (op != game.history_position) ;
+                var valid = (oh != game.history.size()) || (op != game.history_position);
                 if (Boolean.TRUE.equals(valid)) {
-                    addTransition(new DsViewModel.Transition(playerToken, new Coord(game.player().x(), game.player().y())));
+                    for (var i = 0; i < game.actions.size(); i++) {
+                        var a = game.actions.get(i);
+                        if (ot == a.turn()) {
+                            addTransition(new Transition(tokens.get(a.ID()), a.dest()));
+                        }
+                    }
                     if (game.gameState == GameState.postGame) {
                         messageWin.show(Main.me.stage);
                         showMessage("You have escaped!");
@@ -151,11 +156,12 @@ public class DsViewModel {
                         j + (d == DOWN ? +1 : d == UP ? -1 : 0))), r);
     }
 
-    public void addPiece(Coord loc, Color c) {
+    public Circle addPiece(Coord loc, Color c) {
         var t = new Circle();
         setToken(t, tokenCalc(t, new Coord(loc.x, loc.y)));
         t.setFill(c);
         board.piecePane.getChildren().add(t);
+        return t;
     }
 
     public void draw() {
@@ -164,17 +170,18 @@ public class DsViewModel {
         board.setRowCount(game.getHeight());
         board.setColCount(game.getWidth());
         board.piecePane.getChildren().clear();
+        tokens.clear();
 
         for (var thing : game.things) {
-            switch (thing.id()) {
+            switch (thing.type()) {
                 case WALL -> addWall(thing.x(), thing.y(), thing.blocks());
-                case TREASURE -> addPiece(new Coord(thing.x(), thing.y()), Color.GOLD);
-                case GOBLIN -> addPiece(new Coord(thing.x(), thing.y()), Color.WHITE);
+                case TREASURE -> tokens.put(thing.id(), addPiece(new Coord(thing.x(), thing.y()), Color.GOLD));
+                case GOBLIN -> tokens.put(thing.id(), addPiece(new Coord(thing.x(), thing.y()), Color.WHITE));
+                case PIT -> tokens.put(thing.id(), addPiece(new Coord(thing.x(), thing.y()), Color.web("0x000000")));
+                case PLAYER -> tokens.put(thing.id(), addPiece(new Coord(thing.x(), thing.y()), Color.web("0x000077")));
             }
         }
 
-        if (game.player() != null)
-            board.piecePane.getChildren().add(playerToken);
         if (game.exit != null)
             board.piecePane.getChildren().add(exitToken);
 
@@ -192,7 +199,6 @@ public class DsViewModel {
     public void resize() {
         if (board.getHeight() == 0 || board.getWidth() == 0) return;
         setToken(exitToken, tokenCalc(exitToken, new Coord(game.exit.x, game.exit.y)));
-        setToken(playerToken, tokenCalc(playerToken, new Coord(game.player().x(), game.player().y())));
         draw();
     }
 

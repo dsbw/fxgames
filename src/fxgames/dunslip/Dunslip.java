@@ -5,9 +5,10 @@ import fxgames.Coord;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static fxgames.dunslip.Dunslip.ActionType.*;
 import static fxgames.dunslip.Dunslip.Direction.*;
-import static fxgames.dunslip.Dunslip.GamePiece.PLAYER;
-import static fxgames.dunslip.Dunslip.GameState.postGame;
+import static fxgames.dunslip.Dunslip.GamePiece.*;
+import static fxgames.dunslip.Dunslip.GameState.*;
 
 public class Dunslip {
     private int width;
@@ -19,7 +20,7 @@ public class Dunslip {
 
     public enum GameState {design, preGame, inGame, beenEaten, postGame}
 
-    public enum GamePiece {PLAYER, WALL, TREASURE, GOBLIN}
+    public enum GamePiece {PLAYER, WALL, TREASURE, GOBLIN, PIT}
 
     GameState gameState;
     private transient List<Consumer<Dunslip>> consumers = new ArrayList<>();
@@ -27,37 +28,60 @@ public class Dunslip {
     public enum Direction {UP, RIGHT, DOWN, LEFT}
 
     public record Thing(
-            GamePiece id,
+            int id,
+            GamePiece type,
             int x,
             int y,
             Direction blocks,
             boolean occupies,
             boolean removeOnTouch,
-            boolean flees
+            boolean flees,
+            boolean kills
     ) {
         public static Thing copy(Thing t) {
-            return new Thing(t.id, t.x, t.y, t.blocks, t.occupies, t.removeOnTouch, t.flees);
+            return new Thing(t.id, t.type, t.x, t.y, t.blocks, t.occupies, t.removeOnTouch, t.flees, t.kills);
         }
 
         public static Thing move(Thing t, int x, int y) {
-            return new Thing(t.id, x, y, t.blocks, t.occupies, t.removeOnTouch, t.flees);
+            return new Thing(t.id, t.type, x, y, t.blocks, t.occupies, t.removeOnTouch, t.flees, t.kills);
         }
     }
 
+    public enum ActionType {MOVE, REMOVE, EXIT, TOUCHED, KILLED}
+
+    public record Action(
+            int turn,
+            int ID,
+            GamePiece it,
+            ActionType type,
+            Coord source,
+            Coord dest) {
+    }
+
+    public List<Action> actions = new ArrayList<>();
+
     public record Effect(
-            Coord effectLoc,
             Thing effect,
-            Coord causeLoc,
-            Thing cause
+            Thing cause,
+            ActionType type
     ) {
     }
 
-    public ArrayList<Effect> effectList;
+    public ArrayList<Effect> effectList = new ArrayList<>();
 
     public List<Thing> things = new ArrayList<>();
 
+    private static int ID = 0;
+
+    public static int getID() {
+        ID++;
+        return ID;
+    }
+
+    public int TURN = 0;
+
     public static Thing Wall(int x, int y, Direction dir) {
-        return new Thing(GamePiece.WALL, x, y, dir, false, false, false);
+        return new Thing(getID(), GamePiece.WALL, x, y, dir, false, false, false, false);
     }
 
     public Dunslip(int w, int h) {
@@ -71,8 +95,21 @@ public class Dunslip {
         this.height = d.height;
         this.exit = new Coord(d.exit.x, d.exit.y);
         this.gameState = d.gameState;
-        for (Thing t : d.things)  this.add(Thing.copy(t));
+        for (Thing t : d.things) this.add(Thing.copy(t));
         d.consumers = this.consumers;
+    }
+
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof Dunslip d)) {
+            return false;
+        }
+        return (d.width == width &&
+                d.height == height &&
+                d.exit.equals(exit) &&
+                d.gameState == gameState &&
+                d.things.equals(things) &&
+                d.effectList.equals(effectList));
     }
 
     public void copy_history(int hp) {
@@ -109,7 +146,7 @@ public class Dunslip {
     }
 
     public Thing player() {
-        return things.stream().filter(thing -> thing.id == PLAYER).findFirst().get();
+        return things.stream().filter(thing -> thing.type == PLAYER).findFirst().get();
     }
 
     public boolean remove(Thing thing) {
@@ -171,44 +208,68 @@ public class Dunslip {
     public boolean moveThingOneSpace(Thing it, Direction d) {
         Coord dest = new Coord(it.x, it.y).add(dirToDelta(d));
         if (dest.x < 0 || dest.y < 0 || dest.x >= width || dest.y >= height) return false;
-        for(int i = things.size()-1; i >= 0; i--) {
+        for (int i = things.size() - 1; i >= 0; i--) {
             var thing = things.get(i);
             if (thing == it) continue;
             var thingLoc = new Coord(thing.x, thing.y);
             if ((it.x == thingLoc.x) && (it.y == thingLoc.y) && (thing.blocks == d)) return false;
             if (dest.equals(thingLoc)) {
-                if (thing.removeOnTouch) effectList.add(new Effect(dest, thing, new Coord(it.x, it.y), null));
+                if (thing.removeOnTouch) effectList.add(new Effect(thing, it, TOUCHED));
                 if (thing.occupies || (thing.blocks == directionComplement(d))) return false;
             }
         }
         return true;
     }
 
+    private boolean onDeadlyGround(Thing self) {
+        for (int i = things.size() - 1; i >= 0; i--) {
+            var it = things.get(i);
+            if (it == self || it.x != self.x || it.y != self.y) continue;
+            if (it.kills) return true;
+        }
+        return false;
+    }
+
     private boolean moveThing(Thing thing, Direction d) {
-        var moved = false;
+        var start = new Coord(thing.x, thing.y);
         while (moveThingOneSpace(thing, d)) {
             var delta = dirToDelta(d);
             var t = Thing.move(thing, thing.x + delta.x, thing.y + delta.y);
             remove(thing);
             add(t);
             thing = t;
-            moved = true;
-            if (thing.x == exit.x && thing.y == exit.y) {
+
+            if (onDeadlyGround(thing)) {
+                if (t.type == PLAYER) {
+                    gameState = beenEaten;
+                } else {
+                    effectList.add(new Effect(t, null, KILLED));
+                }
+                break;
+            }
+
+            if (thing.x == exit.x && thing.y == exit.y && thing.type == PLAYER) {
                 gameState = postGame;
                 break;
             }
         }
-        return moved;
+        var end = new Coord(thing.x, thing.y);
+        actions.add(new Action(TURN, thing.id, thing.type, ActionType.MOVE, start, end));
+        return !start.equals(end);
     }
 
     public boolean movePlayer(Direction d) {
         if (gameState != GameState.inGame) return false;
         if (history.size() == 0) recordState();
-        effectList = new ArrayList<>();
         var moved = moveThing(player(), d);
-        processEffects();
-        afterEffects();
+        Dunslip before;
+        do {
+            before = new Dunslip(this);
+            processEffects();
+            afterEffects();
+        } while (!this.equals(before));
         recordState();
+        TURN++;
         return moved;
     }
 
@@ -221,13 +282,16 @@ public class Dunslip {
 
     public void processEffects() {
         effectList.forEach(e -> {
-            if (e.effect.removeOnTouch)
+            if (e.type == TOUCHED && e.effect.removeOnTouch)
+                remove(e.effect);
+            else if (e.type == KILLED)
                 remove(e.effect);
         });
+        effectList = new ArrayList<>();
     }
 
     private void afterEffects() {
-        for(int i = things.size()-1; i >= 0; i--) {
+        for (int i = things.size() - 1; i >= 0; i--) {
             var thing = things.get(i);
             var dx = thing.x - player().x;
             var dy = thing.y - player().y;

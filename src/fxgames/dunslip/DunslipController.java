@@ -12,6 +12,7 @@ import java.util.Arrays;
 
 import static fxgames.dunslip.Dunslip.Direction.*;
 import static fxgames.dunslip.Dunslip.GamePiece.*;
+import static fxgames.dunslip.Dunslip.getID;
 
 public class DunslipController {
 
@@ -35,12 +36,18 @@ public class DunslipController {
         grid.setWallThickness(2);
 
         game = new Dunslip(10, 10);
-        game.add(new Thing(PLAYER, 4, 4, null, true, false, false));
+        game.add(new Thing(getID(), PLAYER, 4, 4, null, true, false, false, false));
         game.exit = new Coord(2, 2);
         game.add(Dunslip.Wall(8, 8, RIGHT));
         game.add(Dunslip.Wall(1, 0, LEFT));
-        game.add(new Thing(TREASURE, 4, 9, null, true, true, false));
-        game.add(new Thing(GOBLIN, 8, 7, null, true, true, true));
+        game.add(new Thing(getID(), TREASURE, 4, 9, null, true, true, false, false));
+        game.add(new Thing(getID(), GOBLIN, 8, 7, null, true, true, true, false));
+        game.add(new Thing(getID(), PIT, 8, 1, null, false, false, false, true));
+
+        System.out.println("*****");
+        var t = new Thing(getID(), PIT, 8, 1, null, false, false, false, true);
+        System.out.println(t.equals (Thing.copy(t)));
+        System.out.println("*****");
 
         dvm = new DsViewModel(grid, game, this);
         dvm.draw();
@@ -52,7 +59,8 @@ public class DunslipController {
                 case "Wall (right)" -> dvm.thing = Dunslip.Wall(-1, -1, RIGHT);
                 case "Wall (up)" -> dvm.thing = Dunslip.Wall(-1, -1, UP);
                 case "Wall (down)" -> dvm.thing = Dunslip.Wall(-1, -1, DOWN);
-                case "Treasure" -> dvm.thing = new Thing(TREASURE, -1, -1, null, true, true, false);
+                case "Treasure" -> dvm.thing = new Thing(getID(), TREASURE, -1, -1, null, true, true, false, false);
+                case "Goblin" -> dvm.thing = new Thing(getID(), GOBLIN, -1, -1, null, true, true, true, false);
                 default -> dvm.thing = null;
             }
         });
