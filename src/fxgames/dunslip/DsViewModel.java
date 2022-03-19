@@ -22,6 +22,7 @@ import java.util.LinkedList;
 
 import static fxgames.dunslip.Dunslip.*;
 import static fxgames.dunslip.Dunslip.Direction.*;
+import static fxgames.dunslip.Dunslip.GamePiece.LIGHT;
 
 public class DsViewModel {
 
@@ -95,7 +96,7 @@ public class DsViewModel {
                 if (Boolean.TRUE.equals(valid)) {
                     for (var i = 0; i < game.actions.size(); i++) {
                         var a = game.actions.get(i);
-                        if (ot == a.turn()) {
+                        if (ot == a.turn() && a.it() != LIGHT) {
                             addTransition(new Transition(tokens.get(a.ID()), a.dest()));
                         }
                     }
@@ -139,21 +140,25 @@ public class DsViewModel {
         }
     }
 
-    public Rectangle drawWall(Rectangle2D r) {
+    public Rectangle drawWall(Rectangle2D r, Color c) {
         Rectangle w = new Rectangle(r.getMinX(), r.getMinY(), r.getWidth(), r.getHeight());
-        w.setFill(Color.web("0x353535", 1.0));
+        w.setFill(c);
         board.piecePane.getChildren().add(w);
         return w;
     }
 
-    public void addWall(int i, int j, Direction d) {
+    public void addWall(int i, int j, Direction d, Color c) {
         var isHorz = (d == UP || d == DOWN);
         var isPlus = (d == RIGHT || d == DOWN);
-        var r = drawWall(board.getWallDim(new Coord(i, j), isHorz, isPlus));
+        var r = drawWall(board.getWallDim(new Coord(i, j), isHorz, isPlus), c);
         walls.put(new CoordPair(
                 new Coord(i, j),
                 new Coord(i + (d == RIGHT ? +1 : d == LEFT ? -1 : 0),
                         j + (d == DOWN ? +1 : d == UP ? -1 : 0))), r);
+    }
+
+    public void addWall(int i, int j, Direction d) {
+        addWall(i, j, d, (Color.web("0x353535", 1.0)));
     }
 
     public Circle addPiece(Coord loc, Color c) {
@@ -177,6 +182,14 @@ public class DsViewModel {
                 case WALL -> addWall(thing.x(), thing.y(), thing.blocks());
                 case TREASURE -> tokens.put(thing.id(), addPiece(new Coord(thing.x(), thing.y()), Color.GOLD));
                 case GOBLIN -> tokens.put(thing.id(), addPiece(new Coord(thing.x(), thing.y()), Color.WHITE));
+                case HOBGOBLIN -> {
+                    addWall(thing.x(), thing.y(), thing.blocks(), Color.RED);
+                    tokens.put(thing.id(), addPiece(new Coord(thing.x(), thing.y()), Color.BLUEVIOLET));
+                }
+                case EVIL_EYE -> {
+                    addWall(thing.x(), thing.y(), thing.blocks(), Color.BLUE);
+                    tokens.put(thing.id(), addPiece(new Coord(thing.x(), thing.y()), Color.GREEN));
+                }
                 case PIT -> tokens.put(thing.id(), addPiece(new Coord(thing.x(), thing.y()), Color.web("0x000000")));
                 case PLAYER -> tokens.put(thing.id(), addPiece(new Coord(thing.x(), thing.y()), Color.web("0x000077")));
             }

@@ -20,7 +20,7 @@ public class Dunslip {
 
     public enum GameState {design, preGame, inGame, beenEaten, postGame}
 
-    public enum GamePiece {PLAYER, WALL, TREASURE, GOBLIN, PIT}
+    public enum GamePiece {PLAYER, WALL, TREASURE, GOBLIN, PIT, HOBGOBLIN, EVIL_EYE, LIGHT, EDGE}
 
     GameState gameState;
     private transient List<Consumer<Dunslip>> consumers = new ArrayList<>();
@@ -36,14 +36,17 @@ public class Dunslip {
             boolean occupies,
             boolean removeOnTouch,
             boolean flees,
-            boolean kills
+            boolean kills,
+            boolean melees,
+            boolean snipes,
+            Thing source
     ) {
         public static Thing copy(Thing t) {
-            return new Thing(t.id, t.type, t.x, t.y, t.blocks, t.occupies, t.removeOnTouch, t.flees, t.kills);
+            return new Thing(t.id, t.type, t.x, t.y, t.blocks, t.occupies, t.removeOnTouch, t.flees, t.kills, t.melees, t.snipes, null);
         }
 
         public static Thing move(Thing t, int x, int y) {
-            return new Thing(t.id, t.type, x, y, t.blocks, t.occupies, t.removeOnTouch, t.flees, t.kills);
+            return new Thing(t.id, t.type, x, y, t.blocks, t.occupies, t.removeOnTouch, t.flees, t.kills, t.melees, t.snipes, null);
         }
     }
 
@@ -81,8 +84,17 @@ public class Dunslip {
     public int TURN = 0;
 
     public static Thing Wall(int x, int y, Direction dir) {
-        return new Thing(getID(), GamePiece.WALL, x, y, dir, false, false, false, false);
+        return new Thing(getID(), WALL, x, y, dir, false, false, false, false, false, false, null);
     }
+
+    public static Thing Hobgoblin(int x, int y, Direction dir) {
+        return new Thing(getID(), HOBGOBLIN, x, y, dir, true, true, false, false, true, false, null);
+    }
+
+    public static Thing Evil_Eye(int x, int y, Direction dir) {
+        return new Thing(getID(), EVIL_EYE, x, y, dir, true, true, false, false, true, true, null);
+    }
+
 
     public Dunslip(int w, int h) {
         width = w;
@@ -155,6 +167,10 @@ public class Dunslip {
         things.remove(l);
         return true;
     }
+    public boolean remove(int id) {
+        var target = things.stream().filter(thing -> thing.id == id).findFirst().get();
+        return remove(target);
+    }
 
     public Coord dirToDelta(Direction dir) {
         int mx = 0;
@@ -205,20 +221,23 @@ public class Dunslip {
         };
     }
 
-    public boolean moveThingOneSpace(Thing it, Direction d) {
+    public Thing moveThingOneSpace(Thing it, Direction d) {
         Coord dest = new Coord(it.x, it.y).add(dirToDelta(d));
-        if (dest.x < 0 || dest.y < 0 || dest.x >= width || dest.y >= height) return false;
+        if (dest.x < 0 || dest.y < 0 || dest.x >= width || dest.y >= height)
+            return new Thing(getID(), EDGE, dest.x, dest.y, directionComplement(d), false, false, false, false, false, false, null);
         for (int i = things.size() - 1; i >= 0; i--) {
             var thing = things.get(i);
             if (thing == it) continue;
             var thingLoc = new Coord(thing.x, thing.y);
-            if ((it.x == thingLoc.x) && (it.y == thingLoc.y) && (thing.blocks == d)) return false;
+            if ((it.x == thingLoc.x) && (it.y == thingLoc.y) && (thing.blocks == d) && (thing != it.source))
+                return thing;
             if (dest.equals(thingLoc)) {
+                if (thing.blocks == directionComplement(d)) return thing;
                 if (thing.removeOnTouch) effectList.add(new Effect(thing, it, TOUCHED));
-                if (thing.occupies || (thing.blocks == directionComplement(d))) return false;
+                if (thing.occupies) return thing;
             }
         }
-        return true;
+        return null;
     }
 
     private boolean onDeadlyGround(Thing self) {
@@ -230,11 +249,13 @@ public class Dunslip {
         return false;
     }
 
-    private boolean moveThing(Thing thing, Direction d) {
+    private Thing moveThing(Thing thing, Direction d) {
         var start = new Coord(thing.x, thing.y);
-        while (moveThingOneSpace(thing, d)) {
+        Thing blocker;
+        while ((blocker = moveThingOneSpace(thing, d)) == null) {
             var delta = dirToDelta(d);
             var t = Thing.move(thing, thing.x + delta.x, thing.y + delta.y);
+            if(t.x == thing.x && t.y == thing.y) break;
             remove(thing);
             add(t);
             thing = t;
@@ -255,11 +276,11 @@ public class Dunslip {
         }
         var end = new Coord(thing.x, thing.y);
         actions.add(new Action(TURN, thing.id, thing.type, ActionType.MOVE, start, end));
-        return !start.equals(end);
+        return blocker;
     }
 
-    public boolean movePlayer(Direction d) {
-        if (gameState != GameState.inGame) return false;
+    public Thing movePlayer(Direction d) {
+        if (gameState != GameState.inGame) return null;
         if (history.size() == 0) recordState();
         var moved = moveThing(player(), d);
         Dunslip before;
@@ -296,9 +317,27 @@ public class Dunslip {
             var dx = thing.x - player().x;
             var dy = thing.y - player().y;
             if (Math.abs(dx) + Math.abs(dy) == 1) {
+                if (thing.melees) {
+                    var d = dirToDelta(thing.blocks);
+                    if (thing.x + d.x == player().x() && thing.y + d.y == player().y()) gameState = beenEaten;
+                }
                 if (thing.flees) flee(thing, deltaToDir(dx, dy));
+            } else if ((dx == 0 || dy == 0) && thing.snipes) {
+                var d = dirToDelta(directionComplement(thing.blocks));
+                if (d.x == 0 && ((dy >= 0) ^ (d.y < 0)) ||
+                        d.y == 0 && ((dx >= 0) ^ (d.x < 0))) {
+                    if (look(thing, thing.blocks).type == PLAYER)
+                        gameState = beenEaten;
+                }
             }
         }
+    }
+
+    private Thing look(Thing thing, Direction dir) {
+        var light = new Thing(getID(), LIGHT, thing.x, thing.y, null,false, false, false, false, false, false, thing);
+        var blocker = moveThing(light, dir);
+        remove(light.id);
+        return blocker;
     }
 
     private void flee(Thing thing, Direction dir) {

@@ -36,18 +36,16 @@ public class DunslipController {
         grid.setWallThickness(2);
 
         game = new Dunslip(10, 10);
-        game.add(new Thing(getID(), PLAYER, 4, 4, null, true, false, false, false));
+        game.add(new Thing(getID(), PLAYER, 4, 4, null, true, false, false, false, false, false, null));
         game.exit = new Coord(2, 2);
         game.add(Dunslip.Wall(8, 8, RIGHT));
         game.add(Dunslip.Wall(1, 0, LEFT));
-        game.add(new Thing(getID(), TREASURE, 4, 9, null, true, true, false, false));
-        game.add(new Thing(getID(), GOBLIN, 8, 7, null, true, true, true, false));
-        game.add(new Thing(getID(), PIT, 8, 1, null, false, false, false, true));
+        game.add(new Thing(getID(), TREASURE, 4, 8, null, true, true, false, false, false, false, null));
+        game.add(Dunslip.Evil_Eye(4, 9, UP));
+        game.add(new Thing(getID(), GOBLIN, 8, 7, null, true, true, true, false, false, false, null));
+        //game.add(new Thing(getID(), PIT, 8, 1, null, false, false, false, true, false));
+        game.add(new Thing(getID(), HOBGOBLIN, 0, 9, RIGHT, true, true, false, false, true, false, null));
 
-        System.out.println("*****");
-        var t = new Thing(getID(), PIT, 8, 1, null, false, false, false, true);
-        System.out.println(t.equals (Thing.copy(t)));
-        System.out.println("*****");
 
         dvm = new DsViewModel(grid, game, this);
         dvm.draw();
@@ -59,8 +57,12 @@ public class DunslipController {
                 case "Wall (right)" -> dvm.thing = Dunslip.Wall(-1, -1, RIGHT);
                 case "Wall (up)" -> dvm.thing = Dunslip.Wall(-1, -1, UP);
                 case "Wall (down)" -> dvm.thing = Dunslip.Wall(-1, -1, DOWN);
-                case "Treasure" -> dvm.thing = new Thing(getID(), TREASURE, -1, -1, null, true, true, false, false);
-                case "Goblin" -> dvm.thing = new Thing(getID(), GOBLIN, -1, -1, null, true, true, true, false);
+                case "Treasure" -> dvm.thing = new Thing(getID(), TREASURE, -1, -1, null, true, true, false, false, false, false, null);
+                case "Goblin" -> dvm.thing = new Thing(getID(), GOBLIN, -1, -1, null, true, true, true, false, false, false, null);
+                case "Hobgoblin (left)" -> dvm.thing = Dunslip.Hobgoblin(-1, -1, LEFT);
+                case "Hobgoblin (right)" -> dvm.thing = Dunslip.Hobgoblin(-1, -1, RIGHT);
+                case "Hobgoblin (up)" -> dvm.thing = Dunslip.Hobgoblin(-1, -1, UP);
+                case "Hobgoblin (down)" -> dvm.thing = Dunslip.Hobgoblin(-1, -1, DOWN);
                 default -> dvm.thing = null;
             }
         });

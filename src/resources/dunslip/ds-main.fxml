@@ -29,6 +29,10 @@
                                  <String fx:value="Wall (down)" />
                                  <String fx:value="Treasure" />
                                  <String fx:value="Goblin" />
+                                 <String fx:value="Hobgoblin (left)" />
+                                 <String fx:value="Hobgoblin (right)" />
+                                 <String fx:value="Hobgoblin (up)" />
+                                 <String fx:value="Hobgoblin (down)" />
                              </FXCollections>
                          </items></ListView>
                      </VBox>
